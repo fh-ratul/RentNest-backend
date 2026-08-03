@@ -8,6 +8,7 @@ import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 import { userRoutes } from "./modules/user/user.route";
 import { landlordPropertyRoutes, propertyRoutes } from "./modules/property/property.route";
 import { adminRoutes } from "./modules/admin/admin.route";
+import { rentalRoutes } from "./modules/rentalRequest/rent.routes";
 
 
 
@@ -33,6 +34,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/landlord/properties", landlordPropertyRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/rentals", rentalRoutes);
 
 
 app.use(notFound);
