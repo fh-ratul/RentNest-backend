@@ -22,5 +22,9 @@ export const rentalRoutes = tenantRouter;
 const landlordRouter = Router();
 landlordRouter.use(auth(Role.LANDLORD));
 landlordRouter.get("/", rentalRequestController.getRequestsForLandlord);
-
+landlordRouter.patch(
+  "/:id",
+  validateRequest(rentalRequestValidation.updateStatusSchema),
+  rentalRequestController.updateRentalStatus
+);
 export const landlordRentalRoutes = landlordRouter;

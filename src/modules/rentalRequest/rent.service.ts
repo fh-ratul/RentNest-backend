@@ -2,6 +2,7 @@ import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma";
 import { ICreateRentalRequest, IUpdateRentalStatus } from "./rent.interface";
 import { ApiError } from "../../utils/apiError";
+import { assertValidTransition } from "./rent.utils";
 
 const createRentalRequest = async (
   tenantId: string,
@@ -81,9 +82,25 @@ const getRequestsForLandlord = async (landlordId: string) => {
     orderBy: { createdAt: "desc" },
   });
 };
+
+const updateRentalStatus = async (id: string, landlordId: string, payload: IUpdateRentalStatus) => {
+  const rental = await prisma.rentalRequest.findUnique({ where: { id }, include: { property: true } });
+
+  if (!rental) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Rental request not found");
+  }
+  if (rental.property.landlordId !== landlordId) {
+    throw new ApiError(httpStatus.FORBIDDEN, "You can only manage requests for your own properties");
+  }
+
+  assertValidTransition(rental.status, payload.status);
+
+  return prisma.rentalRequest.update({ where: { id }, data: { status: payload.status } });
+};
 export const rentalRequestService = {
   createRentalRequest,
   getMyRentalRequests,
   getRentalRequestById,
-  getRequestsForLandlord
+  getRequestsForLandlord,
+  updateRentalStatus
 };
