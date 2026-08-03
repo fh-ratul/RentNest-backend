@@ -17,3 +17,10 @@ tenantRouter.get("/", auth(Role.TENANT), rentalRequestController.getMyRentalRequ
 tenantRouter.get("/:id", auth(), rentalRequestController.getRentalRequestById);
 
 export const rentalRoutes = tenantRouter;
+
+
+const landlordRouter = Router();
+landlordRouter.use(auth(Role.LANDLORD));
+landlordRouter.get("/", rentalRequestController.getRequestsForLandlord);
+
+export const landlordRentalRoutes = landlordRouter;
