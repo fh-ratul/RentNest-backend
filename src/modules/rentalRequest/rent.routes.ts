@@ -14,4 +14,6 @@ tenantRouter.post(
 );
 
 tenantRouter.get("/", auth(Role.TENANT), rentalRequestController.getMyRentalRequests);
+tenantRouter.get("/:id", auth(), rentalRequestController.getRentalRequestById);
+
 export const rentalRoutes = tenantRouter;

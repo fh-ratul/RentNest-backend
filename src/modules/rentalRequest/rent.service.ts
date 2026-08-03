@@ -53,7 +53,28 @@ const getMyRentalRequests = async (tenantId: string) => {
     orderBy: { createdAt: "desc" },
   });
 };
+
+const getRentalRequestById = async (id: string, userId: string, role: string) => {
+  const rental = await prisma.rentalRequest.findUnique({
+    where: { id },
+    include: { property: true, tenant: { select: { id: true, name: true, email: true } }, payment: true, review: true },
+  });
+
+  if (!rental) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Rental request not found");
+  }
+
+  const isOwnerTenant = rental.tenantId === userId;
+  const isOwnerLandlord = rental.property.landlordId === userId;
+
+  if (role !== "ADMIN" && !isOwnerTenant && !isOwnerLandlord) {
+    throw new ApiError(httpStatus.FORBIDDEN, "You don't have access to this rental request");
+  }
+
+  return rental;
+};
 export const rentalRequestService = {
   createRentalRequest,
-  getMyRentalRequests
+  getMyRentalRequests,
+  getRentalRequestById
 };
