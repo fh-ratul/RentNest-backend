@@ -1,6 +1,6 @@
 import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma";
-import { IPropertyFilters } from "./property.interface";
+import { ICreateProperty, IPropertyFilters, IUpdateProperty } from "./property.interface";
 import { ApiError } from "../../utils/apiError";
 
 const getAllProperties = async (filters: IPropertyFilters) => {
@@ -58,8 +58,58 @@ const getPropertyById = async (id: string) => {
   return property;
 };
 
+const createProperty = async (landlordId: string, payload: ICreateProperty) => {
+  const category = await prisma.category.findUnique({ where: { id: payload.categoryId } });
+  if (!category) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid categoryId");
+  }
+
+  return prisma.property.create({
+    data: { ...payload, landlordId },
+    include: { category: true },
+  });
+};
+
+const getMyProperties = async (landlordId: string) => {
+  return prisma.property.findMany({
+    where: { landlordId },
+    include: { category: true },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+const updateProperty = async (id: string, landlordId: string, payload: IUpdateProperty) => {
+  const property = await prisma.property.findUnique({ where: { id } });
+
+  if (!property) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Property not found");
+  }
+  if (property.landlordId !== landlordId) {
+    throw new ApiError(httpStatus.FORBIDDEN, "You can only update your own properties");
+  }
+
+  return prisma.property.update({ where: { id }, data: payload });
+};
+
+const deleteProperty = async (id: string, landlordId: string) => {
+  const property = await prisma.property.findUnique({ where: { id } });
+
+  if (!property) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Property not found");
+  }
+  if (property.landlordId !== landlordId) {
+    throw new ApiError(httpStatus.FORBIDDEN, "You can only delete your own properties");
+  }
+
+  await prisma.property.delete({ where: { id } });
+  return null;
+};
+
 export const propertyService = {
+  createProperty,
   getAllProperties,
   getPropertyById,
-  
+  getMyProperties,
+  updateProperty,
+  deleteProperty,
 };
