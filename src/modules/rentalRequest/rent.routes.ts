@@ -13,4 +13,5 @@ tenantRouter.post(
   rentalRequestController.createRentalRequest
 );
 
+tenantRouter.get("/", auth(Role.TENANT), rentalRequestController.getMyRentalRequests);
 export const rentalRoutes = tenantRouter;
