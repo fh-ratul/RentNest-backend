@@ -1,0 +1,487 @@
+{
+  "info": {
+    "_postman_id": "7950cfdc-0f80-48c1-a926-3f4c5bab902e",
+    "name": "My Collection",
+    "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53963213",
+    "_collection_link": "https://go.postman.co/collection/53963213-7950cfdc-0f80-48c1-a926-3f4c5bab902e?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "next-assignment-4",
+      "item": [
+        {
+          "name": "auth",
+          "item": [
+            {
+              "name": "register-user",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"Ratul Hasan\",\r\n  \"email\": \"ratul.tenant@example.com\",\r\n  \"password\": \"test1234\",\r\n  \"role\": \"TENANT\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:5000/api/auth/register",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "5000",
+                  "path": [
+                    "api",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "description": "Registers a new user account in the **RentNest** platform.\n\nSend a `POST` request to `/api/auth/register` with the user's details in the JSON body. On success, the server creates the account, assigns the specified role, and returns the newly created user object with a `201 Created` status.\n\n---\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `name` | string | Yes | Full name of the user |\n| `email` | string | Yes | User's email address |\n| `password` | string | Yes | Account password |\n| `role` | string | Yes | Role assigned to the user — `TENANT` or `LANDLORD` |\n\n---\n\n### Success Response — `201 Created`\n\nReturns a JSON object with the following structure:\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `success` | boolean | `true` on successful registration |\n| `statusCode` | number | HTTP status code (`201`) |\n| `message` | string | Confirmation message |\n| `data.id` | string (UUID) | Unique identifier of the created user |\n| `data.name` | string | Registered name |\n| `data.email` | string | Registered email |\n| `data.role` | string | Assigned role (e.g. `TENANT`) |\n| `data.activeStatus` | string | Account status — defaults to `ACTIVE` upon registration |\n| `data.createdAt` | string (ISO 8601) | Timestamp of account creation |\n\n---\n\n### Notes\n\n- A newly registered user's `activeStatus` is automatically set to `ACTIVE`.\n- The `role` field determines the user's permissions within the platform (`TENANT` for renters, `LANDLORD` for property owners).\n- The `email` must be unique; attempting to register with a duplicate email will result in an error."
+              },
+              "response": []
+            },
+            {
+              "name": "login-user",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Authenticates an existing user and returns an access token for subsequent authorized requests.\n\nSend a `POST` request to `/api/auth/login` with the user's credentials in the JSON body. On success, the server validates the credentials and returns a JWT or session token along with the user's profile details.\n\n---\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `email` | string | Yes | The registered email address of the user |\n| `password` | string | Yes | The user's account password |\n\n---\n\n### Success Response — `200 OK`\n\nReturns a JSON object containing the authentication token and user information.\n\n---\n\n### Notes\n\n- The token returned must be included in the `Authorization` header (as a Bearer token) for all protected endpoints.\n- Invalid credentials will result in a `401 Unauthorized` error."
+              },
+              "response": []
+            },
+            {
+              "name": "getMe",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Retrieves the profile information of the currently authenticated user.\n\nSend a `GET` request to `/api/auth/me` with a valid Bearer token in the `Authorization` header. The server identifies the user from the token and returns their profile data.\n\n---\n\n### Success Response — `200 OK`\n\nReturns the authenticated user's profile object, including fields such as `id`, `name`, `email`, `role`, `activeStatus`, and `createdAt`.\n\n---\n\n### Notes\n\n- This endpoint requires authentication. Requests without a valid token will receive a `401 Unauthorized` response.\n- Useful for verifying the current session and retrieving user context on the client side."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "user",
+          "item": [
+            {
+              "name": "change-pass",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "description": "Allows an authenticated user to change their account password.\n\nSend a `PATCH` request to `/api/user/change-password` with the current and new passwords in the JSON body. The server verifies the current password before applying the update.\n\n---\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `currentPassword` | string | Yes | The user's existing password |\n| `newPassword` | string | Yes | The new password to set |\n\n---\n\n### Success Response — `200 OK`\n\nReturns a confirmation message indicating the password was updated successfully.\n\n---\n\n### Notes\n\n- This endpoint requires authentication via a Bearer token.\n- The current password must match the stored password; otherwise a `400` or `401` error is returned."
+              },
+              "response": []
+            },
+            {
+              "name": "update",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "description": "Updates the profile information of the currently authenticated user.\n\nSend a `PATCH` request to `/api/user/update` with the fields to be updated in the JSON body. Only the provided fields will be modified; omitted fields remain unchanged.\n\n---\n\n### Request Body (partial update)\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `name` | string | Updated full name of the user |\n| `email` | string | Updated email address |\n\n---\n\n### Success Response — `200 OK`\n\nReturns the updated user profile object.\n\n---\n\n### Notes\n\n- This endpoint requires authentication via a Bearer token.\n- Only the fields included in the request body will be updated."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "property",
+          "item": [
+            {
+              "name": "landlord",
+              "item": [
+                {
+                  "name": "getMyProperty",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "description": "Retrieves all properties listed by the currently authenticated landlord.\n\nSend a `GET` request to `/api/landlord/properties` with a valid Bearer token. The server identifies the landlord from the token and returns only their own property listings.\n\n---\n\n### Success Response — `200 OK`\n\nReturns an array of property objects belonging to the authenticated landlord.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to users with the `LANDLORD` role.\n- Returns an empty array if the landlord has not listed any properties yet."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "createProperty",
+                  "request": {
+                    "method": "POST",
+                    "header": [],
+                    "description": "Creates a new rental property listing for the authenticated landlord.\n\nSend a `POST` request to `/api/landlord/properties` with the property details in the JSON body. On success, the server creates the listing and returns the newly created property object.\n\n---\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `title` | string | Yes | Title or name of the property |\n| `description` | string | Yes | Detailed description of the property |\n| `location` | string | Yes | Address or area of the property |\n| `rent` | number | Yes | Monthly rent amount |\n| `bedrooms` | number | Yes | Number of bedrooms |\n\n---\n\n### Success Response — `201 Created`\n\nReturns the newly created property object including its generated `id` and `createdAt` timestamp.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to users with the `LANDLORD` role."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "updateProperty",
+                  "request": {
+                    "method": "PUT",
+                    "header": [],
+                    "description": "Updates an existing property listing owned by the authenticated landlord.\n\nSend a `PUT` request to `/api/landlord/properties/:id`, replacing `:id` with the UUID of the property to update. Include the fields to be updated in the JSON body.\n\n---\n\n### Path Parameter\n\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| `id` | string (UUID) | The unique identifier of the property to update |\n\n---\n\n### Request Body (partial or full update)\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `title` | string | Updated title of the property |\n| `description` | string | Updated description |\n| `location` | string | Updated location |\n| `rent` | number | Updated monthly rent |\n| `bedrooms` | number | Updated bedroom count |\n\n---\n\n### Success Response — `200 OK`\n\nReturns the updated property object.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to the `LANDLORD` role.\n- Only the landlord who owns the property can update it."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "deleteProperty",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [],
+                    "url": {
+                      "raw": "http://localhost:5000/api/landlord/properties",
+                      "protocol": "http",
+                      "host": [
+                        "localhost"
+                      ],
+                      "port": "5000",
+                      "path": [
+                        "api",
+                        "landlord",
+                        "properties"
+                      ]
+                    },
+                    "description": "Deletes a property listing owned by the authenticated landlord.\n\nSend a `DELETE` request to `/api/landlord/properties/:id`, replacing `:id` with the UUID of the property to remove. On success, the property is permanently deleted from the platform.\n\n---\n\n### Path Parameter\n\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| `id` | string (UUID) | The unique identifier of the property to delete |\n\n---\n\n### Success Response — `200 OK`\n\nReturns a confirmation message indicating the property was deleted successfully.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to the `LANDLORD` role.\n- Only the landlord who owns the property can delete it.\n- This action is irreversible."
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "public",
+              "item": [
+                {
+                  "name": "getAllProperties",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "https://rent-nest-flax.vercel.app/api/properties",
+                      "protocol": "https",
+                      "host": [
+                        "rent-nest-flax",
+                        "vercel",
+                        "app"
+                      ],
+                      "path": [
+                        "api",
+                        "properties"
+                      ]
+                    },
+                    "description": "Retrieves a list of all publicly available rental properties on the RentNest platform.\n\nSend a `GET` request to `/api/properties`. No authentication is required. This endpoint is intended for tenants and visitors browsing available listings.\n\n---\n\n### Success Response — `200 OK`\n\nReturns an array of property objects, each containing details such as property ID, title, location, rent, and availability status.\n\n---\n\n### Notes\n\n- This is a public endpoint — no Bearer token is needed.\n- Supports optional query parameters for filtering and pagination (e.g. `page`, `limit`, `location`)."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "getPropertyById",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "description": "Retrieves the full details of a single rental property by its unique ID.\n\nSend a `GET` request to `/api/properties/:id`, replacing `:id` with the UUID of the target property. No authentication is required.\n\n---\n\n### Path Parameter\n\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| `id` | string (UUID) | The unique identifier of the property |\n\n---\n\n### Success Response — `200 OK`\n\nReturns a single property object with all available details including title, description, location, rent, images, and landlord information.\n\n---\n\n### Notes\n\n- This is a public endpoint — no Bearer token is needed.\n- Returns `404 Not Found` if no property exists with the given ID."
+                  },
+                  "response": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "admin",
+          "item": [
+            {
+              "name": "getAllUsers",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:5000/api/admin/users",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "5000",
+                  "path": [
+                    "api",
+                    "admin",
+                    "users"
+                  ]
+                },
+                "description": "Retrieves a list of all registered users on the platform. This is an admin-only endpoint.\n\nSend a `GET` request to `/api/admin/users` with a valid Bearer token belonging to an admin user.\n\n---\n\n### Success Response — `200 OK`\n\nReturns an array of user objects, each containing `id`, `name`, `email`, `role`, `activeStatus`, and `createdAt`.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to users with the `ADMIN` role.\n- Useful for user management and platform administration."
+              },
+              "response": []
+            },
+            {
+              "name": "updateUserStatus",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Allows an admin to update the active status of a user account (e.g. activate or deactivate it).\n\nSend a request to `/api/admin/users/:id/status`, replacing `:id` with the UUID of the target user. Include the new status in the request body.\n\n---\n\n### Path Parameter\n\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| `id` | string (UUID) | The unique identifier of the user |\n\n---\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `activeStatus` | string | Yes | The new status — e.g. `ACTIVE` or `INACTIVE` |\n\n---\n\n### Success Response — `200 OK`\n\nReturns the updated user object with the new `activeStatus` applied.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to users with the `ADMIN` role.\n- Deactivating a user prevents them from logging in or accessing protected endpoints."
+              },
+              "response": []
+            },
+            {
+              "name": "getAllProperties",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:5000/api/admin/properties",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "5000",
+                  "path": [
+                    "api",
+                    "admin",
+                    "properties"
+                  ]
+                },
+                "description": "Retrieves all property listings across the platform. This is an admin-only endpoint.\n\nSend a `GET` request to `/api/admin/properties` with a valid Bearer token belonging to an admin user.\n\n---\n\n### Success Response — `200 OK`\n\nReturns an array of all property objects on the platform, including their details and associated landlord information.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to users with the `ADMIN` role.\n- Useful for platform-wide property management and moderation."
+              },
+              "response": []
+            },
+            {
+              "name": "getAllRentalRequests",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Retrieves all rental requests across the entire platform. This is an admin-only endpoint.\n\nSend a `GET` request to `/api/admin/rental-requests` with a valid Bearer token belonging to an admin user. Returns a complete list of all rental requests regardless of tenant or landlord.\n\n---\n\n### Success Response — `200 OK`\n\nReturns an array of all rental request objects on the platform, each including tenant details, property details, status, and timestamps.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to users with the `ADMIN` role.\n- Useful for platform-wide oversight and moderation."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "rentalRequest",
+          "item": [
+            {
+              "name": "requests",
+              "item": [
+                {
+                  "name": "createRentalRequest",
+                  "request": {
+                    "method": "POST",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\r\n  \"propertyId\": \"e8223cca-650e-4a1d-9161-56431045e70d\",\r\n  \"moveInDate\": \"2026-08-15T00:00:00.000Z\",\r\n  \"message\": \"I would like to rent this property starting next month.\"\r\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "http://localhost:5000/api/rentals",
+                      "protocol": "http",
+                      "host": [
+                        "localhost"
+                      ],
+                      "port": "5000",
+                      "path": [
+                        "api",
+                        "rentals"
+                      ]
+                    },
+                    "description": "Submits a rental request from a tenant for a specific property.\n\nSend a `POST` request to `/api/rentals` with the rental details in the JSON body. The server creates a new rental request associated with the authenticated tenant and the specified property.\n\n---\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `propertyId` | string (UUID) | Yes | The ID of the property the tenant wants to rent |\n| `moveInDate` | string (ISO 8601) | Yes | The desired move-in date |\n| `message` | string | No | An optional message to the landlord |\n\n---\n\n### Success Response — `201 Created`\n\nReturns the newly created rental request object including its `id`, `status`, and associated property and tenant details.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to users with the `TENANT` role.\n- The initial status of a rental request is typically `PENDING`."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "getMyRentalRequests",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "http://localhost:5000/api/rentals",
+                      "protocol": "http",
+                      "host": [
+                        "localhost"
+                      ],
+                      "port": "5000",
+                      "path": [
+                        "api",
+                        "rentals"
+                      ]
+                    },
+                    "description": "Retrieves all rental requests submitted by the currently authenticated tenant.\n\nSend a `GET` request to `/api/rentals` with a valid Bearer token. The server identifies the tenant from the token and returns all their rental requests along with the associated property details.\n\n---\n\n### Success Response — `200 OK`\n\nReturns an array of rental request objects belonging to the authenticated tenant, each including the request `id`, `status`, `moveInDate`, `message`, and linked property information.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is intended for users with the `TENANT` role.\n- Returns an empty array if the tenant has not submitted any rental requests."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "getRentalReqById",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "description": "Retrieves the full details of a single rental request by its unique ID.\n\nSend a `GET` request to `/api/rentals/:id`, replacing `:id` with the UUID of the target rental request.\n\n---\n\n### Path Parameter\n\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| `id` | string (UUID) | The unique identifier of the rental request |\n\n---\n\n### Success Response — `200 OK`\n\nReturns a single rental request object with all details including `status`, `moveInDate`, `message`, tenant info, and property info.\n\n---\n\n### Notes\n\n- This endpoint requires authentication.\n- Returns `404 Not Found` if no rental request exists with the given ID."
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "landlord",
+              "item": [
+                {
+                  "name": "getRequestsForLandlord",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "http://localhost:5000/api/landlord/requests",
+                      "protocol": "http",
+                      "host": [
+                        "localhost"
+                      ],
+                      "port": "5000",
+                      "path": [
+                        "api",
+                        "landlord",
+                        "requests"
+                      ]
+                    },
+                    "description": "Retrieves all rental requests submitted for properties owned by the authenticated landlord.\n\nSend a `GET` request to `/api/landlord/requests` with a valid Bearer token. The server returns all incoming rental requests across all of the landlord's listed properties.\n\n---\n\n### Success Response — `200 OK`\n\nReturns an array of rental request objects, each including the request `id`, `status`, tenant details, `moveInDate`, and the associated property.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to users with the `LANDLORD` role.\n    \n- Returns an empty array if no rental requests have been submitted for the landlord's properties."
+                  },
+                  "response": []
+                },
+                {
+                  "name": "updateRentalStatusByLandlord",
+                  "request": {
+                    "method": "PATCH",
+                    "header": [],
+                    "url": {
+                      "raw": "http://localhost:5000/api/landlord/requests/f44e28a7-961c-4649-90e3-21ea800eea98",
+                      "protocol": "http",
+                      "host": [
+                        "localhost"
+                      ],
+                      "port": "5000",
+                      "path": [
+                        "api",
+                        "landlord",
+                        "requests",
+                        "f44e28a7-961c-4649-90e3-21ea800eea98"
+                      ]
+                    },
+                    "description": "Allows a landlord to update the status of a rental request (e.g. approve or reject it).\n\nSend a `PATCH` request to `/api/landlord/requests/:id`, replacing `:id` with the UUID of the rental request. Include the new status in the JSON body.\n\n---\n\n### Path Parameter\n\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| `id` | string (UUID) | The unique identifier of the rental request to update |\n\n---\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `status` | string | Yes | The new status — e.g. `APPROVED` or `REJECTED` |\n\n---\n\n### Success Response — `200 OK`\n\nReturns the updated rental request object with the new status applied.\n\n---\n\n### Notes\n\n- This endpoint requires authentication and is restricted to the `LANDLORD` role.\n- Only the landlord who owns the associated property can update the request status."
+                  },
+                  "response": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "review",
+          "item": [
+            {
+              "name": "createReview",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"rentalRequestId\": \"f44e28a7-961c-4649-90e3-21ea800eea98\",\r\n  \"rating\": 5,\r\n  \"comment\": \"Great experience\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:5000/api/reviews",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "5000",
+                  "path": [
+                    "api",
+                    "reviews"
+                  ]
+                },
+                "description": "Submits a review for a completed rental experience.\n\nSend a `POST` request to `/api/reviews` with the review details in the JSON body. The review is linked to a specific rental request, allowing tenants to rate and comment on their experience.\n\n---\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `rentalRequestId` | string (UUID) | Yes | The ID of the completed rental request being reviewed |\n| `rating` | number | Yes | A numeric rating (e.g. 1–5) |\n| `comment` | string | No | An optional written comment about the experience |\n\n---\n\n### Success Response — `201 Created`\n\nReturns the newly created review object including its `id`, `rating`, `comment`, and associated rental request details.\n\n---\n\n### Notes\n\n- This endpoint requires authentication.\n- A review can only be submitted for a rental request that has been completed or approved."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "payment",
+          "item": [
+            {
+              "name": "createPayment",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"rentalRequestId\": \"99e101c8-f689-4f5e-864b-3dfd8a88d6c1\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:5000/api/payments/create",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "5000",
+                  "path": [
+                    "api",
+                    "payments",
+                    "create"
+                  ]
+                },
+                "description": "Initiates a payment for an approved rental request.\n\nSend a `POST` request to `/api/payments/create` with the rental request ID in the JSON body. The server creates a payment record and returns the payment details or a redirect URL for completing the transaction.\n\n---\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `rentalRequestId` | string (UUID) | Yes | The ID of the approved rental request to pay for |\n\n---\n\n### Success Response — `201 Created`\n\nReturns the created payment object or a payment gateway URL to complete the transaction.\n\n---\n\n### Notes\n\n- This endpoint requires authentication.\n- Payment can only be initiated for rental requests with an `APPROVED` status."
+              },
+              "response": []
+            },
+            {
+              "name": "confirmPayment",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Confirms and finalizes a payment after it has been processed by the payment gateway.\n\nSend a `POST` request to `/api/payments/confirm` with the payment reference or transaction details. The server verifies the payment and marks it as confirmed.\n\n---\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `paymentId` | string | Yes | The ID or reference of the payment to confirm |\n\n---\n\n### Success Response — `200 OK`\n\nReturns the confirmed payment object with an updated status (e.g. `CONFIRMED` or `PAID`).\n\n---\n\n### Notes\n\n- This endpoint is typically called after a successful redirect from the payment gateway.\n- Returns an error if the payment reference is invalid or already confirmed."
+              },
+              "response": []
+            },
+            {
+              "name": "getPAyments",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Retrieves all payment records associated with the currently authenticated user.\n\nSend a `GET` request to `/api/payments` with a valid Bearer token. The server returns all payments linked to the authenticated user's rental requests.\n\n---\n\n### Success Response — `200 OK`\n\nReturns an array of payment objects, each including the payment `id`, `amount`, `status`, `createdAt`, and associated rental request details.\n\n---\n\n### Notes\n\n- This endpoint requires authentication.\n- Returns an empty array if the user has no payment records."
+              },
+              "response": []
+            },
+            {
+              "name": "getPaymentById",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:5000/api/payments/61cf45b8-0da8-411e-bccc-133377a183e2",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "5000",
+                  "path": [
+                    "api",
+                    "payments",
+                    "61cf45b8-0da8-411e-bccc-133377a183e2"
+                  ]
+                },
+                "description": "Retrieves the full details of a single payment record by its unique ID.\n\nSend a `GET` request to `/api/payments/:id`, replacing `:id` with the UUID of the target payment.\n\n---\n\n### Path Parameter\n\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| `id` | string (UUID) | The unique identifier of the payment |\n\n---\n\n### Success Response — `200 OK`\n\nReturns a single payment object with all details including `amount`, `status`, `createdAt`, and the associated rental request.\n\n---\n\n### Notes\n\n- This endpoint requires authentication.\n- Returns `404 Not Found` if no payment exists with the given ID."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
