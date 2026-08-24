@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
 import { JwtPayload, SignOptions } from "jsonwebtoken";
 import httpStatus from "http-status";
-import { prisma } from "../../lib/prisma";
-import config from "../../config";
-import { IRegisterUser, ILoginUser } from "./auth.interface";
-import { ApiError } from "../../utils/apiError";
-import { jwtUtils } from "../../utils/jwt";
+import { prisma } from "../../lib/prisma.js";
+import config from "../../config/index.js";
+import { IRegisterUser, ILoginUser } from "./auth.interface.js";
+import { ApiError } from "../../utils/apiError.js";
+import { jwtUtils } from "../../utils/jwt.js";
 
 const registerUser = async (payload: IRegisterUser) => {
   const existingUser = await prisma.user.findUnique({
@@ -103,8 +103,43 @@ const getMe = async (userId: string) => {
   return user;
 };
 
+const refreshToken = async (token: string) => {
+  if (!token) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Refresh token is missing");
+  }
+
+  const verified = jwtUtils.verifyToken(token, config.jwt_refresh_secret);
+
+  if (!verified.success || !verified.data) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, verified.error || "Invalid refresh token");
+  }
+
+  const { id } = verified.data as JwtPayload;
+
+  const user = await prisma.user.findUnique({ where: { id } });
+
+  if (!user) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "User no longer exists");
+  }
+
+  if (user.activeStatus === "BLOCKED") {
+    throw new ApiError(httpStatus.FORBIDDEN, "This account is blocked");
+  }
+
+  const jwtPayload = { id: user.id, name: user.name, email: user.email, role: user.role };
+
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
+
+  return { accessToken };
+};
+
 export const authService = {
   registerUser,
   loginUser,
   getMe,
+  refreshToken, 
 };

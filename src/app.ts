@@ -1,16 +1,17 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express, { Application, Request, Response } from "express";
-import config from "./config";
-import { authRoutes } from "./modules/auth/auth.route";
-import { notFound } from "./middlewares/notFound";
-import { globalErrorHandler } from "./middlewares/globalErrorHandler";
-import { userRoutes } from "./modules/user/user.route";
-import { landlordPropertyRoutes, propertyRoutes } from "./modules/property/property.route";
-import { adminRoutes } from "./modules/admin/admin.route";
-import { landlordRentalRoutes, rentalRoutes } from "./modules/rentalRequest/rent.routes";
-import { paymentRoutes } from "./modules/payment/payment.route";
-import { reviewRoutes } from "./modules/reviews/review.route";
+import config from "./config/index.js";
+import { authRoutes } from "./modules/auth/auth.route.js";
+import { notFound } from "./middlewares/notFound.js";
+import { globalErrorHandler } from "./middlewares/globalErrorHandler.js";
+import { userRoutes } from "./modules/user/user.route.js";
+import { landlordPropertyRoutes, propertyRoutes } from "./modules/property/property.route.js";
+import { adminRoutes } from "./modules/admin/admin.route.js";
+import { landlordRentalRoutes, rentalRoutes } from "./modules/rentalRequest/rent.routes.js";
+import { paymentRoutes } from "./modules/payment/payment.route.js";
+import { reviewRoutes } from "./modules/reviews/review.route.js";
+import { categoryRoutes } from "./modules/category/category.route.js";
 
 
 
@@ -40,6 +41,7 @@ app.use("/api/rentals", rentalRoutes);
 app.use("/api/landlord/requests", landlordRentalRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/categories", categoryRoutes);
 
 app.use(notFound);
 app.use(globalErrorHandler);

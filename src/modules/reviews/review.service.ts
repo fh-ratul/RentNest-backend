@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
-import { prisma } from "../../lib/prisma";
-import { ICreateReview } from "./review.interface";
-import { ApiError } from "../../utils/apiError";
+import { prisma } from "../../lib/prisma.js";
+import { ICreateReview } from "./review.interface.js";
+import { ApiError } from "../../utils/apiError.js";
 
 const createReview = async (tenantId: string, payload: ICreateReview) => {
   const rental = await prisma.rentalRequest.findUnique({

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import httpStatus from "http-status";
-import { catchAsync } from "../../utils/catchAsync";
-import { sendResponse } from "../../utils/sendResponse";
-import { adminService } from "./admin.service";
+import { catchAsync } from "../../utils/catchAsync.js";
+import { sendResponse } from "../../utils/sendResponse.js";
+import { adminService } from "./admin.service.js";
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const result = await adminService.getAllUsers();

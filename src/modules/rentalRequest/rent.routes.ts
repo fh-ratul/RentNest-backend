@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { rentalRequestController } from "./rent.controller";
-import { auth } from "../../middlewares/auth";
-import { validateRequest } from "../../middlewares/validateRequest";
-import { rentalRequestValidation } from "./rent.validation";
-import { Role } from "../../../prisma/generated/prisma/enums";
+import { rentalRequestController } from "./rent.controller.js";
+import { auth } from "../../middlewares/auth.js";
+import { validateRequest } from "../../middlewares/validateRequest.js";
+import { rentalRequestValidation } from "./rent.validation.js";
+import { Role } from "@prisma/client";
 
 const tenantRouter = Router();
 tenantRouter.post(

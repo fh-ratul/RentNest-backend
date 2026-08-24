@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { auth } from "../../middlewares/auth";
-import { validateRequest } from "../../middlewares/validateRequest";
-import { userValidation } from "./user.validation";
-import { userController } from "./user.controller";
+import { auth } from "../../middlewares/auth.js";
+import { validateRequest } from "../../middlewares/validateRequest.js";
+import { userValidation } from "./user.validation.js";
+import { userController } from "./user.controller.js";
 
 const router= Router()
 router.patch("/updateMe", auth(), validateRequest(userValidation.updateProfileSchema), userController.updateProfile);
