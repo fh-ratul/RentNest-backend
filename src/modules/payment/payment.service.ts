@@ -1,10 +1,10 @@
 import httpStatus from "http-status";
 import Stripe from "stripe";
-import config from "../../config";
-import { prisma } from "../../lib/prisma";
-import { stripe } from "../../lib/stripe";
-import { ApiError } from "../../utils/apiError";
-import { assertValidTransition } from "../rentalRequest/rent.utils";
+import config from "../../config/index.js";
+import { prisma } from "../../lib/prisma.js";
+import { stripe } from "../../lib/stripe.js";
+import { ApiError } from "../../utils/apiError.js";
+import { assertValidTransition } from "../rentalRequest/rent.utils.js";
 
 const completeStripePayment = async (session: Stripe.Checkout.Session) => {
   const payment = await prisma.payment.findUnique({

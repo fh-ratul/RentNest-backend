@@ -1,8 +1,8 @@
 import httpStatus from "http-status";
-import { prisma } from "../../lib/prisma";
-import { ICreateRentalRequest, IUpdateRentalStatus } from "./rent.interface";
-import { ApiError } from "../../utils/apiError";
-import { assertValidTransition } from "./rent.utils";
+import { prisma } from "../../lib/prisma.js";
+import { ICreateRentalRequest, IUpdateRentalStatus } from "./rent.interface.js";
+import { ApiError } from "../../utils/apiError.js";
+import { assertValidTransition } from "./rent.utils.js";
 
 const createRentalRequest = async (
   tenantId: string,

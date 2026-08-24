@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
-import { prisma } from "../../lib/prisma";
-import { ICreateProperty, IPropertyFilters, IUpdateProperty } from "./property.interface";
-import { ApiError } from "../../utils/apiError";
+import { prisma } from "../../lib/prisma.js";
+import { ICreateProperty, IPropertyFilters, IUpdateProperty } from "./property.interface.js";
+import { ApiError } from "../../utils/apiError.js";
 
 const getAllProperties = async (filters: IPropertyFilters) => {
   const { city, categoryId, minPrice, maxPrice, bedrooms, search, page = 1, limit = 10 } = filters;

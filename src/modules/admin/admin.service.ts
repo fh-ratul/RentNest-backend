@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
-import { prisma } from "../../lib/prisma";
-import { IUpdateUserStatus } from "./admin.interface";
-import { ApiError } from "../../utils/apiError";
+import { prisma } from "../../lib/prisma.js";
+import { IUpdateUserStatus } from "./admin.interface.js";
+import { ApiError } from "../../utils/apiError.js";
 
 const getAllUsers = async () => {
   return prisma.user.findMany({

@@ -1,6 +1,6 @@
 import httpStatus from "http-status";
-import { RentalStatus } from "./rent.interface";
-import { ApiError } from "../../utils/apiError";
+import { RentalStatus } from "./rent.interface.js";
+import { ApiError } from "../../utils/apiError.js";
 
 const VALID_TRANSITIONS: Record<RentalStatus, RentalStatus[]> = {
   PENDING: ["APPROVED", "REJECTED"],

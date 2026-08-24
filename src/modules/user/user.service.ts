@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
 import httpStatus from "http-status";
-import { prisma } from "../../lib/prisma";
-import config from "../../config";
-import { IUpdateProfile, IChangePassword } from "./user.interface";
-import { ApiError } from "../../utils/apiError";
+import { prisma } from "../../lib/prisma.js";
+import config from "../../config/index.js";
+import { IUpdateProfile, IChangePassword } from "./user.interface.js";
+import { ApiError } from "../../utils/apiError.js";
 
 const updateProfile = async (userId: string, payload: IUpdateProfile) => {
   const user = await prisma.user.update({
