@@ -12,6 +12,7 @@ import { landlordRentalRoutes, rentalRoutes } from "./modules/rentalRequest/rent
 import { paymentRoutes } from "./modules/payment/payment.route.js";
 import { reviewRoutes } from "./modules/reviews/review.route.js";
 import { categoryRoutes } from "./modules/category/category.route.js";
+import { RateLimiter } from "./middlewares/rateLimiter.js";
 
 
 
@@ -25,14 +26,14 @@ app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended : true }));
 app.use(cookieParser())
-
+app.use(RateLimiter.generalLimiter);
 
 app.get("/",(req : Request, res : Response) => {
     res.send("Hello, World!");
 });
 
 
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", RateLimiter.authLimiter, authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/landlord/properties", landlordPropertyRoutes);
