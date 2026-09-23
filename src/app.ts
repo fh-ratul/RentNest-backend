@@ -13,11 +13,15 @@ import { paymentRoutes } from "./modules/payment/payment.route.js";
 import { reviewRoutes } from "./modules/reviews/review.route.js";
 import { categoryRoutes } from "./modules/category/category.route.js";
 import { RateLimiter } from "./middlewares/rateLimiter.js";
+import helmet from "helmet";
+import compression from "compression";
 
 
 
 const app : Application = express();
 
+app.use(helmet());
+app.use(compression());
 app.use(cors({
     origin : config.app_url,
     credentials : true,
