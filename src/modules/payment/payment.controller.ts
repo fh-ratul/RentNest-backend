@@ -4,6 +4,9 @@ import { catchAsync } from "../../utils/catchAsync.js";
 import { ApiError } from "../../utils/apiError.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { paymentService } from "./payment.service.js";
+import Stripe from "stripe";
+import { stripe } from "../../lib/stripe.js";
+import config from "../../config/index.js";
 
 const createPayment = catchAsync(async (req: Request, res: Response) => {
   const result = await paymentService.createPayment(
@@ -33,6 +36,36 @@ const confirmPayment = catchAsync(async (req: Request, res: Response) => {
 
 
 
+// Not wrapped in catchAsync: Stripe needs explicit status codes (400 = bad
+// signature, 500 = retry), not the global error handler's output.
+const handleWebhook = async (req: Request, res: Response) => {
+  const signature = req.headers["stripe-signature"];
+  if (!signature || typeof signature !== "string") {
+    return res.status(400).send("Missing stripe-signature header");
+  }
+
+  let event: Stripe.Event;
+  try {
+    // req.body is the raw Buffer (express.raw is mounted on this route in app.ts)
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      signature,
+      config.stripe_webhook_secret,
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Invalid signature";
+    return res.status(400).send(`Webhook Error: ${message}`);
+  }
+
+  try {
+    await paymentService.handleWebhookEvent(event);
+    return res.status(200).json({ received: true });
+  } catch (err) {
+    console.error(`Stripe webhook failed for ${event.type} (${event.id}):`, err);
+    return res.status(500).json({ received: false });
+  }
+};
+
 const getMyPayments = catchAsync(async (req: Request, res: Response) => {
   const result = await paymentService.getMyPayments(req.user!.id);
   sendResponse(res, {
@@ -60,6 +93,7 @@ const getPaymentById = catchAsync(async (req: Request, res: Response) => {
 export const paymentController = {
   createPayment,
   confirmPayment,
+  handleWebhook,
   getMyPayments,
   getPaymentById,
 };

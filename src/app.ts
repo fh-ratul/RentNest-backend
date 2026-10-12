@@ -10,6 +10,7 @@ import { landlordPropertyRoutes, propertyRoutes } from "./modules/property/prope
 import { adminRoutes } from "./modules/admin/admin.route.js";
 import { landlordRentalRoutes, rentalRoutes } from "./modules/rentalRequest/rent.routes.js";
 import { paymentRoutes } from "./modules/payment/payment.route.js";
+import { paymentController } from "./modules/payment/payment.controller.js";
 import { reviewRoutes } from "./modules/reviews/review.route.js";
 import { categoryRoutes } from "./modules/category/category.route.js";
 import { RateLimiter } from "./middlewares/rateLimiter.js";
@@ -26,7 +27,13 @@ app.use(cors({
     origin : config.app_url,
     credentials : true,
 }))
-app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
+// Must stay before express.json() (needs the raw body for signature
+// verification) and before the rate limiter (Stripe retries from shared IPs).
+app.post(
+    "/api/payments/webhook",
+    express.raw({ type: "application/json" }),
+    paymentController.handleWebhook,
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended : true }));
 app.use(cookieParser())

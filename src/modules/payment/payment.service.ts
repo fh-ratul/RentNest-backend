@@ -61,15 +61,10 @@ const completeStripePayment = async (session: Stripe.Checkout.Session) => {
           paidAt: new Date(),
         },
       }),
-      rental.status === "ACTIVE"
-        ? prisma.rentalRequest.update({
-            where: { id: rental.id },
-            data: { status: "ACTIVE" },
-          })
-        : prisma.rentalRequest.update({
-            where: { id: rental.id },
-            data: { status: "ACTIVE" },
-          }),
+      prisma.rentalRequest.update({
+        where: { id: rental.id },
+        data: { status: "ACTIVE" },
+      }),
       prisma.property.update({
         where: { id: rental.propertyId },
         data: { status: "RENTED" },
@@ -125,7 +120,7 @@ const createPayment = async (tenantId: string, rentalRequestId: string) => {
       "Rental request must be APPROVED by the landlord before payment",
     );
   }
-  if (rental.payment) {
+  if (rental.payment?.status === "COMPLETED") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       "A payment already exists for this rental request",
@@ -159,14 +154,20 @@ const createPayment = async (tenantId: string, rentalRequestId: string) => {
     );
   }
 
-  const payment = await prisma.payment.create({
-    data: {
-      rentalRequestId: rental.id,
-      amount,
-      stripeSessionId: session.id,
-      status: "PENDING",
-    },
-  });
+  // A PENDING/FAILED payment row is reused (rentalRequestId is unique).
+  const payment = rental.payment
+    ? await prisma.payment.update({
+        where: { id: rental.payment.id },
+        data: { stripeSessionId: session.id, status: "PENDING", amount },
+      })
+    : await prisma.payment.create({
+        data: {
+          rentalRequestId: rental.id,
+          amount,
+          stripeSessionId: session.id,
+          status: "PENDING",
+        },
+      });
 
   return {
     paymentUrl: session.url,
@@ -245,9 +246,35 @@ const getPaymentById = async (id: string, userId: string, role: string) => {
   return payment;
 };
 
+const handleWebhookEvent = async (event: Stripe.Event) => {
+  switch (event.type) {
+    case "checkout.session.completed":
+    case "checkout.session.async_payment_succeeded": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      // Async methods complete as "unpaid" first; async_payment_succeeded follows.
+      if (session.payment_status === "paid") {
+        await completeStripePayment(session);
+      }
+      break;
+    }
+    case "checkout.session.expired":
+    case "checkout.session.async_payment_failed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      await prisma.payment.updateMany({
+        where: { stripeSessionId: session.id, status: "PENDING" },
+        data: { status: "FAILED" },
+      });
+      break;
+    }
+    default:
+      break;
+  }
+};
+
 export const paymentService = {
   createPayment,
   confirmPayment,
+  handleWebhookEvent,
   getMyPayments,
   getPaymentById,
 };
