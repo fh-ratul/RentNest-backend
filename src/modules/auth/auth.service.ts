@@ -224,6 +224,7 @@ const loginUser = async (payload: ILoginUser) => {
     throw new ApiError(
       httpStatus.FORBIDDEN,
       "Your email is not verified. We have sent a new OTP to your email.",
+      "EMAIL_NOT_VERIFIED",
     );
   }
 

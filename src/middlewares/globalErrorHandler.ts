@@ -49,6 +49,7 @@ export const globalErrorHandler = (err: any, req: Request, res: Response, next: 
         statusCode,
         name : errorName,
         message: errorMessage,
+        ...(err instanceof ApiError && err.code && { code: err.code }),
         ...(process.env.NODE_ENV !== "production" && { error: err.stack }),
     })
 }
