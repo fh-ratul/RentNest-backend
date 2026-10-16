@@ -9,6 +9,11 @@ enum ActiveStatus {
   BLOCKED
 }
 
+enum AuthProvider {
+  CREDENTIAL
+  GOOGLE
+}
+
 enum PropertyStatus {
   AVAILABLE
   RENTED

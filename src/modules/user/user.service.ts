@@ -17,6 +17,13 @@ const updateProfile = async (userId: string, payload: IUpdateProfile) => {
 const changePassword = async (userId: string, payload: IChangePassword) => {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
+  if (!user.password) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "This account was created with Google and has no password",
+    );
+  }
+
   const isMatched = await bcrypt.compare(payload.oldPassword, user.password);
   if (!isMatched) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Old password is incorrect");
