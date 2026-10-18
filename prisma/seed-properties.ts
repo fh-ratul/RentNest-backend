@@ -552,4 +552,48 @@ export const SEED_PROPERTIES: SeedProperty[] = [
       photo("1556911220-bff31c812dba"),
     ],
   },
+
+  // ── Rangamati ──────────────────────────────────────────────────────────
+  {
+    landlord: "nusrat",
+    category: "Family House",
+    title: "Hillside Retreat House in Rangamati",
+    description:
+      "Timber-and-glass house on a quiet hillside above Kaptai Lake, with a deck that looks over the water. Three bedrooms, a warm open living room and a garden with fruit trees. Good for a family that wants calm, or for long remote-work stays.",
+    address: "Reserve Bazar Road, Rangamati Sadar",
+    city: "Rangamati",
+    price: 35000,
+    bedrooms: 3,
+    bathrooms: 2,
+    amenities: ["Lake view", "Garden", "Car parking", "Generator backup", "Balcony"],
+    images: [
+      photo("1568605114967-8130f3a36994"),
+      photo("1618219908412-a29a1bb7b86e"),
+      photo("1617104678098-de229db51175"),
+      photo("1556912173-3bb406ef7e77"),
+      photo("1584622650111-993a426fbf0a"),
+    ],
+  },
+
+  // ── Dhaka (more) ───────────────────────────────────────────────────────
+  {
+    landlord: "demo",
+    category: "Apartment",
+    title: "Bright 2-Bed Apartment in Lalmatia",
+    description:
+      "Light-filled 2-bedroom apartment on a leafy block in Lalmatia, near Asad Gate and the Dhanmondi end of Mirpur Road. Large living room with wide windows, a fitted kitchen and a lift. Small family or working couple preferred; two months' advance.",
+    address: "Block D, Lalmatia",
+    city: "Dhaka",
+    price: 35000,
+    bedrooms: 2,
+    bathrooms: 2,
+    amenities: ["Lift", "Generator backup", "Gas line", "Balcony", "24/7 security"],
+    images: [
+      photo("1616137466211-f939a420be84"),
+      photo("1616486338812-3dadae4b4ace"),
+      photo("1595526114035-0d45ed16cfbf"),
+      photo("1600489000022-c2086d79f9d4"),
+      photo("1595514535415-dae8580c416c"),
+    ],
+  },
 ];
