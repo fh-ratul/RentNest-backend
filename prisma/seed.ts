@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { SEED_CATEGORIES, SEED_LANDLORDS, SEED_PROPERTIES } from "./seed-properties.js";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -49,63 +50,49 @@ async function seedDemoUsers() {
   return ids;
 }
 
-async function seedProperties(landlordId: string) {
-  const existingProperties = await prisma.property.count();
+// Adds the listings from seed-properties.ts. Safe to re-run: a listing whose
+// title its landlord already has is skipped, and nothing else is touched.
+async function seedProperties(demoLandlordId: string) {
+  const password = await bcrypt.hash(DEMO_PASSWORD, Number(process.env.BCRYPT_SALT_ROUNDS) || 10);
+  const landlordIds: Record<string, string> = { demo: demoLandlordId };
 
-  if (existingProperties > 0) {
-    console.log("Properties already exist. Property seed skipped.");
-    return;
-  }
-
-  let category = await prisma.category.findFirst({});
-  if (!category) {
-    category = await prisma.category.create({
-      data: { name: "Apartment" },
+  for (const landlord of SEED_LANDLORDS) {
+    const user = await prisma.user.upsert({
+      where: { email: landlord.email },
+      update: {},
+      create: {
+        name: landlord.name,
+        email: landlord.email,
+        password,
+        role: "LANDLORD",
+        isEmailVerified: true,
+      },
     });
+    landlordIds[landlord.key] = user.id;
   }
 
-  await prisma.property.createMany({
-    data: [
-      {
-        title: "Modern Apartment in Downtown",
-        description: "Bright and spacious apartment with great city views.",
-        address: "123 Main Street",
-        city: "Dhaka",
-        price: 45000,
-        bedrooms: 2,
-        bathrooms: 2,
-        status: "AVAILABLE",
-        categoryId: category.id,
-        landlordId,
-      },
-      {
-        title: "Cozy Family House",
-        description: "Perfect for families with a garden and parking space.",
-        address: "456 Green Road",
-        city: "Chittagong",
-        price: 65000,
-        bedrooms: 3,
-        bathrooms: 2,
-        status: "AVAILABLE",
-        categoryId: category.id,
-        landlordId,
-      },
-      {
-        title: "Luxury Loft near Airport",
-        description: "Stylish loft with modern furniture and open plan design.",
-        address: "789 Airport Avenue",
-        city: "Sylhet",
-        price: 78000,
-        bedrooms: 1,
-        bathrooms: 1,
-        status: "AVAILABLE",
-        categoryId: category.id,
-        landlordId,
-      },
-    ],
-  });
+  const categoryIds: Record<string, string> = {};
+  for (const name of SEED_CATEGORIES) {
+    const category = await prisma.category.upsert({ where: { name }, update: {}, create: { name } });
+    categoryIds[name] = category.id;
+  }
 
-  console.log("Seeded dummy properties successfully.");
+  let created = 0;
+  for (const { landlord, category, ...property } of SEED_PROPERTIES) {
+    const landlordId = landlordIds[landlord]!;
+    const exists = await prisma.property.findFirst({
+      where: { title: property.title, landlordId },
+      select: { id: true },
+    });
+    if (exists) continue;
+
+    await prisma.property.create({
+      data: { ...property, status: "AVAILABLE", landlordId, categoryId: categoryIds[category]! },
+    });
+    created++;
+  }
+
+  console.log(`Seeded ${created} new properties (${SEED_PROPERTIES.length - created} already existed).`);
 }
 
 async function main() {
