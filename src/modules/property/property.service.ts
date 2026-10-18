@@ -2,6 +2,7 @@ import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma.js";
 import { ICreateProperty, IPropertyFilters, IUpdateProperty } from "./property.interface.js";
 import { ApiError } from "../../utils/apiError.js";
+import { uploadImage } from "../../lib/cloudinary.js";
 
 const getAllProperties = async (filters: IPropertyFilters) => {
   const { city, categoryId, minPrice, maxPrice, bedrooms, search, page = 1, limit = 10 } = filters;
@@ -105,6 +106,16 @@ const deleteProperty = async (id: string, landlordId: string) => {
   return null;
 };
 
+// Only the URL is kept: Property.images stores URLs, uploaded or pasted.
+const uploadPropertyImage = async (file?: Express.Multer.File) => {
+  if (!file) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Please choose an image to upload");
+  }
+
+  const { url } = await uploadImage(file.buffer, "properties");
+  return { url };
+};
+
 export const propertyService = {
   createProperty,
   getAllProperties,
@@ -112,4 +123,5 @@ export const propertyService = {
   getMyProperties,
   updateProperty,
   deleteProperty,
+  uploadPropertyImage,
 };

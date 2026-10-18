@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
+import { MulterError } from "multer";
 import { ApiError } from "../utils/apiError.js";
 
 export const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
@@ -13,6 +14,13 @@ export const globalErrorHandler = (err: any, req: Request, res: Response, next: 
 
     if(err instanceof ApiError){
         statusCode = err.statusCode;
+    }else if(err instanceof MulterError){
+        statusCode = httpStatus.BAD_REQUEST;
+        errorMessage = err.code === "LIMIT_FILE_SIZE"
+            ? "Image must be 5 MB or smaller"
+            : err.code === "LIMIT_UNEXPECTED_FILE"
+                ? "Upload one image at a time in the \"image\" field"
+                : err.message;
     }else if(err instanceof ZodError){
         statusCode = httpStatus.BAD_REQUEST;
         errorName = "ValidationError";

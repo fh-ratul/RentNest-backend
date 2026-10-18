@@ -74,6 +74,16 @@ const deleteProperty = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const uploadPropertyImage = catchAsync(async (req: Request, res: Response) => {
+  const result = await propertyService.uploadPropertyImage(req.file);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: "Image uploaded",
+    data: result,
+  });
+});
+
 export const propertyController = {
   createProperty,
   getAllProperties,
@@ -81,4 +91,5 @@ export const propertyController = {
   getMyProperties,
   updateProperty,
   deleteProperty,
+  uploadPropertyImage,
 };
