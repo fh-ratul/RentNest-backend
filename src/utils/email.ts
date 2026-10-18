@@ -11,6 +11,11 @@ export type TEmail = {
 // on it (the OTP) can fail the request, while notifications just ignore it.
 // Awaited by callers because a serverless function may be frozen once it responds.
 export const sendEmail = async ({ to, subject, html }: TEmail) => {
+  // The seeded demo accounts use example.com, which has no mailboxes.
+  if (to.toLowerCase().endsWith("@example.com")) {
+    return true;
+  }
+
   try {
     await transporter.sendMail({
       from: `"RentNest" <${config.email_sender}>`,
