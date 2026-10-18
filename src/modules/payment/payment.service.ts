@@ -135,7 +135,8 @@ const createPayment = async (tenantId: string, rentalRequestId: string) => {
     line_items: [
       {
         price_data: {
-          currency: "usd",
+          // Rent is stored in BDT; unit_amount is in poisha (1/100 taka).
+          currency: "bdt",
           product_data: { name: `Rent payment - ${rental.property.title}` },
           unit_amount: Math.round(amount * 100),
         },
