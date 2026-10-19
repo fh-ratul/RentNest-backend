@@ -14,6 +14,7 @@ import { paymentController } from "./modules/payment/payment.controller.js";
 import { reviewRoutes } from "./modules/reviews/review.route.js";
 import { categoryRoutes } from "./modules/category/category.route.js";
 import { aiRoutes } from "./modules/ai/ai.route.js";
+import { geoRoutes } from "./modules/geo/geo.route.js";
 import { RateLimiter } from "./middlewares/rateLimiter.js";
 import helmet from "helmet";
 import compression from "compression";
@@ -56,6 +57,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/geo", geoRoutes);
 
 app.use(notFound);
 app.use(globalErrorHandler);

@@ -68,8 +68,17 @@ const aiLimiter = createRateLimiter({
   message: "Too many AI requests. Please try again in a few minutes.",
 });
 
+// Place search and commute times call free OpenStreetMap services.
+const mapLimiter = createRateLimiter({
+  prefix: "map",
+  limit: 60,
+  windowMs: 15 * 60 * 1000,
+  message: "Too many map lookups. Please try again in a few minutes.",
+});
+
 export const RateLimiter={
     authLimiter,
     generalLimiter,
-    aiLimiter
+    aiLimiter,
+    mapLimiter
 }

@@ -5,10 +5,17 @@ import { validateRequest } from "../../middlewares/validateRequest.js";
 import { propertyValidation } from "./property.validation.js";
 import { Role } from "@prisma/client";
 import { upload } from "../../lib/multer.js";
+import { RateLimiter } from "../../middlewares/rateLimiter.js";
 
 const publicRouter = Router();
 publicRouter.get("/", propertyController.getAllProperties);
 publicRouter.get("/:id", propertyController.getPropertyById);
+publicRouter.get(
+  "/:id/commute",
+  RateLimiter.mapLimiter,
+  validateRequest(propertyValidation.commuteSchema),
+  propertyController.getPropertyCommute,
+);
 export const propertyRoutes = publicRouter;
 
 const landlordRouter = Router();

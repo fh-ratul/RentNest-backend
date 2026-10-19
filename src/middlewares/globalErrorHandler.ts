@@ -24,7 +24,7 @@ export const globalErrorHandler = (err: any, req: Request, res: Response, next: 
     }else if(err instanceof ZodError){
         statusCode = httpStatus.BAD_REQUEST;
         errorName = "ValidationError";
-        errorMessage = err.issues.map((issue) => issue.message).join(", ");
+        errorMessage = [...new Set(err.issues.map((issue) => issue.message))].join(", ");
     }else if(err instanceof Prisma.PrismaClientValidationError){
         statusCode = httpStatus.BAD_REQUEST;
         errorMessage = "You have provided incorrect field type or missing fields"

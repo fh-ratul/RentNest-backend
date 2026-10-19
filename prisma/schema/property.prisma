@@ -10,6 +10,14 @@ model Property {
     amenities   String[]
     images      String[]
     status      PropertyStatus @default(AVAILABLE)
+
+    // Map pin, set by the landlord. Nearby places are looked up once per pin
+    // (OpenStreetMap) and stored, with an AI-written summary of them.
+    latitude               Float?
+    longitude              Float?
+    neighbourhood          Json?
+    neighbourhoodSummary   String?   @db.Text
+    neighbourhoodUpdatedAt DateTime?
     createdAt   DateTime       @default(now())
     updatedAt   DateTime       @updatedAt
 

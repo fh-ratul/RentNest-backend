@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+// Roughly Bangladesh's bounding box, so a slip of the map can't save a pin abroad.
+const OUTSIDE_BD = "The map pin must be in Bangladesh";
+const latitude = z.number().min(20.3, OUTSIDE_BD).max(26.8, OUTSIDE_BD).nullable().optional();
+const longitude = z.number().min(88.0, OUTSIDE_BD).max(92.8, OUTSIDE_BD).nullable().optional();
+const bothOrNeither = (body: { latitude?: number | null; longitude?: number | null }) =>
+  (body.latitude == null) === (body.longitude == null);
+
 const createSchema = z.object({
   body: z.object({
     title: z.string({ message: "Title is required" }).min(3).max(255),
@@ -15,7 +22,9 @@ const createSchema = z.object({
     furnishing: z.enum(["FURNISHED", "SEMI_FURNISHED", "UNFURNISHED"]).optional(),
     availableFrom: z.string().datetime().optional(),
     categoryId: z.string({ message: "categoryId is required" }).uuid("Invalid categoryId"),
-  }),
+    latitude,
+    longitude,
+  }).refine(bothOrNeither, { message: "Send both latitude and longitude, or neither" }),
 });
 
 const updateSchema = z.object({
@@ -33,7 +42,16 @@ const updateSchema = z.object({
     furnishing: z.enum(["FURNISHED", "SEMI_FURNISHED", "UNFURNISHED"]).optional(),
     availableFrom: z.string().datetime().optional(),
     categoryId: z.string().uuid().optional(),
+    latitude,
+    longitude,
+  }).refine(bothOrNeither, { message: "Send both latitude and longitude, or neither" }),
+});
+
+const commuteSchema = z.object({
+  query: z.object({
+    lat: z.coerce.number().min(20.3, OUTSIDE_BD).max(26.8, OUTSIDE_BD),
+    lng: z.coerce.number().min(88.0, OUTSIDE_BD).max(92.8, OUTSIDE_BD),
   }),
 });
 
-export const propertyValidation = { createSchema, updateSchema };
+export const propertyValidation = { createSchema, updateSchema, commuteSchema };

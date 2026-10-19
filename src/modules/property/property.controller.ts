@@ -3,6 +3,7 @@ import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { propertyService } from "./property.service.js";
+import { getCommute } from "./property.neighbourhood.js";
 
 const getAllProperties = catchAsync(async (req: Request, res: Response) => {
   const { properties, meta } = await propertyService.getAllProperties(
@@ -84,6 +85,20 @@ const uploadPropertyImage = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Car and walking times from a listing to a point the visitor picked.
+const getPropertyCommute = catchAsync(async (req: Request, res: Response) => {
+  const result = await getCommute(req.params.id as string, {
+    lat: Number(req.query.lat),
+    lng: Number(req.query.lng),
+  });
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Travel times retrieved",
+    data: result,
+  });
+});
+
 export const propertyController = {
   createProperty,
   getAllProperties,
@@ -92,4 +107,5 @@ export const propertyController = {
   updateProperty,
   deleteProperty,
   uploadPropertyImage,
+  getPropertyCommute,
 };

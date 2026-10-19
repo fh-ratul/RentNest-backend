@@ -12,6 +12,8 @@ export interface ICreateProperty {
   furnishing?: "FURNISHED" | "SEMI_FURNISHED" | "UNFURNISHED";
   availableFrom?: string;
   categoryId: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface IUpdateProperty {
@@ -28,6 +30,8 @@ export interface IUpdateProperty {
   furnishing?: "FURNISHED" | "SEMI_FURNISHED" | "UNFURNISHED";
   availableFrom?: string;
   categoryId?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface IPropertyFilters {

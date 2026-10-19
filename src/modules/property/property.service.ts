@@ -1,8 +1,11 @@
 import httpStatus from "http-status";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { ICreateProperty, IPropertyFilters, IUpdateProperty } from "./property.interface.js";
 import { ApiError } from "../../utils/apiError.js";
 import { uploadImage } from "../../lib/cloudinary.js";
+import { runInBackground } from "../../utils/background.js";
+import { needsNeighbourhood, refreshNeighbourhood } from "./property.neighbourhood.js";
 
 const getAllProperties = async (filters: IPropertyFilters) => {
   const { city, categoryId, minPrice, maxPrice, bedrooms, search, page = 1, limit = 10 } = filters;
@@ -56,6 +59,11 @@ const getPropertyById = async (id: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Property not found");
   }
 
+  // A pin without stored places (the lookup failed or was cut short): retry.
+  if (needsNeighbourhood(property)) {
+    runInBackground("Neighbourhood lookup", () => refreshNeighbourhood(property.id));
+  }
+
   return property;
 };
 
@@ -65,10 +73,16 @@ const createProperty = async (landlordId: string, payload: ICreateProperty) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid categoryId");
   }
 
-  return prisma.property.create({
+  const property = await prisma.property.create({
     data: { ...payload, landlordId },
     include: { category: true },
   });
+
+  if (property.latitude !== null && property.longitude !== null) {
+    runInBackground("Neighbourhood lookup", () => refreshNeighbourhood(property.id));
+  }
+
+  return property;
 };
 
 const getMyProperties = async (landlordId: string) => {
@@ -89,7 +103,23 @@ const updateProperty = async (id: string, landlordId: string, payload: IUpdatePr
     throw new ApiError(httpStatus.FORBIDDEN, "You can only update your own properties");
   }
 
-  return prisma.property.update({ where: { id }, data: payload });
+  // A moved pin makes the stored nearby places wrong, so they are looked up again.
+  const pinMoved =
+    (payload.latitude !== undefined && payload.latitude !== property.latitude) ||
+    (payload.longitude !== undefined && payload.longitude !== property.longitude);
+
+  const updated = await prisma.property.update({
+    where: { id },
+    data: pinMoved
+      ? { ...payload, neighbourhood: Prisma.DbNull, neighbourhoodSummary: null, neighbourhoodUpdatedAt: null }
+      : payload,
+  });
+
+  if (pinMoved && updated.latitude !== null && updated.longitude !== null) {
+    runInBackground("Neighbourhood lookup", () => refreshNeighbourhood(id));
+  }
+
+  return updated;
 };
 
 const deleteProperty = async (id: string, landlordId: string) => {
