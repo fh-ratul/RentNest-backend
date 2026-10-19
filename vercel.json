@@ -2,7 +2,8 @@
   "version": 2,
   "functions": {
     "api/index.ts": {
-      "includeFiles": "prisma/schema/**"
+      "includeFiles": "prisma/schema/**",
+      "maxDuration": 60
     }
   },
   "rewrites": [

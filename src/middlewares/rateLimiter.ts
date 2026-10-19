@@ -60,7 +60,16 @@ const createRateLimiter = ({ prefix, limit, windowMs, message }: LimiterOptions)
   message: "Too many requests. Please slow down and try again shortly.",
 });
 
+// AI calls count against small free-tier quotas shared by everyone.
+const aiLimiter = createRateLimiter({
+  prefix: "ai",
+  limit: 20,
+  windowMs: 15 * 60 * 1000,
+  message: "Too many AI requests. Please try again in a few minutes.",
+});
+
 export const RateLimiter={
     authLimiter,
-    generalLimiter
+    generalLimiter,
+    aiLimiter
 }

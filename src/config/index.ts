@@ -26,4 +26,9 @@ export default {
   cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY!,
   cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET!,
+  gemini_api_key: process.env.GEMINI_API_KEY!,
+  // Free-tier model names change; check AI Studio before relying on a default.
+  gemini_model: process.env.GEMINI_MODEL || "gemini-3.5-flash",
+  groq_api_key: process.env.GROQ_API_KEY!,
+  groq_model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
 };
