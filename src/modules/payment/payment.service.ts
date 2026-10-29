@@ -120,6 +120,12 @@ const createPayment = async (tenantId: string, rentalRequestId: string) => {
       "Rental request must be APPROVED by the landlord before payment",
     );
   }
+  if (rental.property.status !== "AVAILABLE") {
+    throw new ApiError(
+      httpStatus.CONFLICT,
+      "This property has already been rented",
+    );
+  }
   if (rental.payment?.status === "COMPLETED") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,

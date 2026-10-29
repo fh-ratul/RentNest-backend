@@ -1,4 +1,5 @@
 import httpStatus from "http-status";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { ICreateRentalRequest, IUpdateRentalStatus } from "./rent.interface.js";
 import { ApiError } from "../../utils/apiError.js";
@@ -36,15 +37,29 @@ const createRentalRequest = async (
     );
   }
 
-  return prisma.rentalRequest.create({
-    data: {
-      tenantId,
-      propertyId: payload.propertyId,
-      moveInDate: new Date(payload.moveInDate),
-      message: payload.message,
-    },
-    include: { property: true },
-  });
+  // The partial unique index catches a concurrent duplicate the check above misses.
+  try {
+    return await prisma.rentalRequest.create({
+      data: {
+        tenantId,
+        propertyId: payload.propertyId,
+        moveInDate: new Date(payload.moveInDate),
+        message: payload.message,
+      },
+      include: { property: true },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw new ApiError(
+        httpStatus.CONFLICT,
+        "You already have an active or pending request for this property",
+      );
+    }
+    throw error;
+  }
 };
 
 const getMyRentalRequests = async (tenantId: string) => {
@@ -95,7 +110,19 @@ const updateRentalStatus = async (id: string, landlordId: string, payload: IUpda
 
   assertValidTransition(rental.status, payload.status);
 
-  return prisma.rentalRequest.update({ where: { id }, data: { status: payload.status } });
+  if (payload.status === "APPROVED" && rental.property.status !== "AVAILABLE") {
+    throw new ApiError(httpStatus.CONFLICT, "This property is no longer available");
+  }
+
+  // Only one APPROVED/ACTIVE rental per property is allowed (partial unique index).
+  try {
+    return await prisma.rentalRequest.update({ where: { id }, data: { status: payload.status } });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new ApiError(httpStatus.CONFLICT, "Another tenant has already been approved for this property");
+    }
+    throw error;
+  }
 };
 export const rentalRequestService = {
   createRentalRequest,

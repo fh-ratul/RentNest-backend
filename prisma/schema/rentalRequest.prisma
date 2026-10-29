@@ -17,5 +17,9 @@ model RentalRequest {
 
     @@index([tenantId])
     @@index([propertyId])
+    // At most one APPROVED/ACTIVE rental per property
+    @@unique([propertyId], map: "one_active_rental_per_property", where: raw("\"status\" IN ('APPROVED', 'ACTIVE')"))
+    // At most one open request per tenant per property
+    @@unique([tenantId, propertyId], map: "one_open_request_per_tenant_property", where: raw("\"status\" IN ('PENDING', 'APPROVED', 'ACTIVE')"))
     @@map("rental_requests")
 }
