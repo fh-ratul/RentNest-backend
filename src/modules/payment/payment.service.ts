@@ -1,4 +1,5 @@
 import httpStatus from "http-status";
+import { Prisma } from "@prisma/client";
 import Stripe from "stripe";
 import config from "../../config/index.js";
 import { prisma } from "../../lib/prisma.js";
@@ -52,54 +53,79 @@ const completeStripePayment = async (session: Stripe.Checkout.Session) => {
     typeof session.payment_intent === "string" ? session.payment_intent : null;
 
   if (payment) {
-    const [updatedPayment] = await prisma.$transaction([
-      prisma.payment.update({
-        where: { id: payment.id },
+    return prisma.$transaction(async (tx) => {
+      // Conditional update: only one concurrent call can move the payment to COMPLETED.
+      const { count } = await tx.payment.updateMany({
+        where: { id: payment.id, status: { not: "COMPLETED" } },
         data: {
           status: "COMPLETED",
           transactionId,
           paidAt: new Date(),
         },
-      }),
-      prisma.rentalRequest.update({
+      });
+
+      // Another call (webhook or /confirm) already completed this payment.
+      if (count === 0) {
+        return tx.payment.findUniqueOrThrow({ where: { id: payment.id } });
+      }
+
+      await tx.rentalRequest.update({
         where: { id: rental.id },
         data: { status: "ACTIVE" },
-      }),
-      prisma.property.update({
+      });
+
+      await tx.property.update({
         where: { id: rental.propertyId },
         data: { status: "RENTED" },
-      }),
-    ]);
+      });
 
-    return updatedPayment;
+      return tx.payment.findUniqueOrThrow({ where: { id: payment.id } });
+    });
   }
 
   const amount = Number(rental.property.price);
 
-  return prisma.$transaction(async (tx) => {
-    const createdPayment = await tx.payment.create({
-      data: {
-        rentalRequestId: rental.id,
-        amount,
-        stripeSessionId: session.id,
-        transactionId,
-        status: "COMPLETED",
-        paidAt: new Date(),
-      },
-    });
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const createdPayment = await tx.payment.create({
+        data: {
+          rentalRequestId: rental.id,
+          amount,
+          stripeSessionId: session.id,
+          transactionId,
+          status: "COMPLETED",
+          paidAt: new Date(),
+        },
+      });
 
-    await tx.rentalRequest.update({
-      where: { id: rental.id },
-      data: { status: "ACTIVE" },
-    });
+      await tx.rentalRequest.update({
+        where: { id: rental.id },
+        data: { status: "ACTIVE" },
+      });
 
-    await tx.property.update({
-      where: { id: rental.propertyId },
-      data: { status: "RENTED" },
-    });
+      await tx.property.update({
+        where: { id: rental.propertyId },
+        data: { status: "RENTED" },
+      });
 
-    return createdPayment;
-  });
+      return createdPayment;
+    });
+  } catch (error) {
+    // A concurrent call already created the payment. P2002 aborts the
+    // transaction, so the existing row is read outside it.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      const existingPayment = await prisma.payment.findUnique({
+        where: { stripeSessionId: session.id },
+      });
+      if (existingPayment) {
+        return existingPayment;
+      }
+    }
+    throw error;
+  }
 };
 
 const createPayment = async (tenantId: string, rentalRequestId: string) => {
