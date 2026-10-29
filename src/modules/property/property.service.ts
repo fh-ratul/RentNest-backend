@@ -132,7 +132,18 @@ const deleteProperty = async (id: string, landlordId: string) => {
     throw new ApiError(httpStatus.FORBIDDEN, "You can only delete your own properties");
   }
 
-  await prisma.property.delete({ where: { id } });
+  // Payments restrict the cascade through rental requests (P2003).
+  try {
+    await prisma.property.delete({ where: { id } });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      throw new ApiError(
+        httpStatus.CONFLICT,
+        "This property has payment history and cannot be deleted. Mark it inactive instead.",
+      );
+    }
+    throw error;
+  }
   return null;
 };
 

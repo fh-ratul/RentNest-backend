@@ -9,7 +9,8 @@ model Payment {
   createdAt       DateTime      @default(now())
 
   rentalRequestId String        @unique
-  rentalRequest   RentalRequest @relation(fields: [rentalRequestId], references: [id], onDelete: Cascade)
+  // Restrict: payment records must never be removed by a cascading delete.
+  rentalRequest   RentalRequest @relation(fields: [rentalRequestId], references: [id], onDelete: Restrict)
 
   @@map("payments")
 }
