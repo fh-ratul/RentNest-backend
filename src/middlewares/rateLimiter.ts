@@ -1,5 +1,20 @@
 import { Request, Response, NextFunction } from "express";
+import { timingSafeEqual } from "crypto";
+import config from "../config/index.js";
 import { prisma } from "../lib/prisma.js";
+
+// Requests arrive from the Next.js server, so req.ip is shared by all users.
+// The frontend forwards the real client IP with a shared secret.
+const isTrustedFrontend = (req: Request) => {
+  const expected = config.internal_api_secret;
+  if (!expected) return false;
+  const sent = Buffer.from(req.get("x-internal-secret") ?? "");
+  const wanted = Buffer.from(expected);
+  return sent.length === wanted.length && timingSafeEqual(sent, wanted);
+};
+
+const clientIp = (req: Request) =>
+  (isTrustedFrontend(req) && req.get("x-client-ip")) || req.ip;
 
 type LimiterOptions = {
   prefix: string;
@@ -10,7 +25,7 @@ type LimiterOptions = {
 
 const createRateLimiter = ({ prefix, limit, windowMs, message }: LimiterOptions) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const key = `${prefix}:${req.ip}`;
+    const key = `${prefix}:${clientIp(req)}`;
     const now = new Date();
     const expiresAt = new Date(now.getTime() + windowMs);
 

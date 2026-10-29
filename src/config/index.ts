@@ -31,4 +31,5 @@ export default {
   gemini_model: process.env.GEMINI_MODEL || "gemini-3.5-flash",
   groq_api_key: process.env.GROQ_API_KEY!,
   groq_model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+  internal_api_secret: process.env.INTERNAL_API_SECRET || "",
 };
