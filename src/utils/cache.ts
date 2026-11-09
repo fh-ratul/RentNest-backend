@@ -2,7 +2,11 @@ import { getRedis } from "../lib/redis.js";
 
 // Best-effort Redis cache: if Redis is down, the value is just computed.
 // Null results are not cached, so a failed lookup is retried next time.
-export const cached = async <T>(key: string, ttlSeconds: number, compute: () => Promise<T | null>): Promise<T | null> => {
+export const cached = async <T>(
+  key: string,
+  ttlSeconds: number,
+  compute: () => Promise<T | null>,
+): Promise<T | null> => {
   try {
     const client = await getRedis();
     const hit = await client.get(key);

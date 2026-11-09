@@ -8,4 +8,9 @@ export interface IUpdateRentalStatus {
   status: "APPROVED" | "REJECTED" | "COMPLETED";
 }
 
-export type RentalStatus = "PENDING" | "APPROVED" | "REJECTED" | "ACTIVE" | "COMPLETED";
+export type RentalStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "ACTIVE"
+  | "COMPLETED";

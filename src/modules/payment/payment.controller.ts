@@ -33,8 +33,6 @@ const confirmPayment = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
-
 // Not wrapped in catchAsync: Stripe needs explicit status codes (400 = bad
 // signature, 500 = retry), not the global error handler's output.
 const handleWebhook = async (req: Request, res: Response) => {
@@ -60,7 +58,10 @@ const handleWebhook = async (req: Request, res: Response) => {
     await paymentService.handleWebhookEvent(event);
     return res.status(200).json({ received: true });
   } catch (err) {
-    console.error(`Stripe webhook failed for ${event.type} (${event.id}):`, err);
+    console.error(
+      `Stripe webhook failed for ${event.type} (${event.id}):`,
+      err,
+    );
     return res.status(500).json({ received: false });
   }
 };

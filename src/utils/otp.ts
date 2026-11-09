@@ -22,7 +22,8 @@ const redis = async () => {
   }
 };
 
-export const generateOtp = () => randomInt(0, 1_000_000).toString().padStart(6, "0");
+export const generateOtp = () =>
+  randomInt(0, 1_000_000).toString().padStart(6, "0");
 
 // A new OTP replaces any earlier one for the same email.
 export const saveOtp = async (email: string, otp: string) => {

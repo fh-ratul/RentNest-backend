@@ -26,7 +26,11 @@ const setAuthCookies = (
   { accessToken, refreshToken }: { accessToken: string; refreshToken: string },
 ) => {
   setAccessTokenCookie(res, accessToken);
-  res.cookie("refreshToken", refreshToken, cookieOptions(REFRESH_TOKEN_MAX_AGE));
+  res.cookie(
+    "refreshToken",
+    refreshToken,
+    cookieOptions(REFRESH_TOKEN_MAX_AGE),
+  );
 };
 
 const registerUser = catchAsync(async (req: Request, res: Response) => {

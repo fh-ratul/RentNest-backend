@@ -1,14 +1,24 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, { type Application, type Request, type Response } from "express";
+import express, {
+  type Application,
+  type Request,
+  type Response,
+} from "express";
 import config from "./config/index.js";
 import { authRoutes } from "./modules/auth/auth.route.js";
 import { notFound } from "./middlewares/notFound.js";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler.js";
 import { userRoutes } from "./modules/user/user.route.js";
-import { landlordPropertyRoutes, propertyRoutes } from "./modules/property/property.route.js";
+import {
+  landlordPropertyRoutes,
+  propertyRoutes,
+} from "./modules/property/property.route.js";
 import { adminRoutes } from "./modules/admin/admin.route.js";
-import { landlordRentalRoutes, rentalRoutes } from "./modules/rentalRequest/rent.routes.js";
+import {
+  landlordRentalRoutes,
+  rentalRoutes,
+} from "./modules/rentalRequest/rent.routes.js";
 import { paymentRoutes } from "./modules/payment/payment.route.js";
 import { paymentController } from "./modules/payment/payment.controller.js";
 import { reviewRoutes } from "./modules/reviews/review.route.js";
@@ -19,32 +29,31 @@ import { RateLimiter } from "./middlewares/rateLimiter.js";
 import helmet from "helmet";
 import compression from "compression";
 
-
-
-const app : Application = express();
+const app: Application = express();
 
 app.use(helmet());
 app.use(compression());
-app.use(cors({
-    origin : config.app_url,
-    credentials : true,
-}))
+app.use(
+  cors({
+    origin: config.app_url,
+    credentials: true,
+  }),
+);
 // Must stay before express.json() (needs the raw body for signature
 // verification) and before the rate limiter (Stripe retries from shared IPs).
 app.post(
-    "/api/payments/webhook",
-    express.raw({ type: "application/json" }),
-    paymentController.handleWebhook,
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  paymentController.handleWebhook,
 );
 app.use(express.json());
-app.use(express.urlencoded({ extended : true }));
-app.use(cookieParser())
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(RateLimiter.generalLimiter);
 
-app.get("/",(req : Request, res : Response) => {
-    res.send("Hello, World!");
+app.get("/", (req: Request, res: Response) => {
+  res.send("Hello, World!");
 });
-
 
 app.use("/api/auth", RateLimiter.authLimiter, authRoutes);
 app.use("/api/users", userRoutes);

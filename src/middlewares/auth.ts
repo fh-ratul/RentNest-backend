@@ -30,19 +30,28 @@ export const auth = (...requiredRoles: Role[]) => {
         : req.headers.authorization;
 
     if (!token) {
-      throw new ApiError(httpStatus.UNAUTHORIZED, "You are not logged in. Please log in to access this resource.");
+      throw new ApiError(
+        httpStatus.UNAUTHORIZED,
+        "You are not logged in. Please log in to access this resource.",
+      );
     }
 
     const verifiedToken = jwtUtils.verifyToken(token, config.jwt_access_secret);
 
     if (!verifiedToken.success || !verifiedToken.data) {
-      throw new ApiError(httpStatus.UNAUTHORIZED, verifiedToken.error || "Invalid or expired token");
+      throw new ApiError(
+        httpStatus.UNAUTHORIZED,
+        verifiedToken.error || "Invalid or expired token",
+      );
     }
 
     const { id, role } = verifiedToken.data as JwtPayload;
 
     if (requiredRoles.length && !requiredRoles.includes(role)) {
-      throw new ApiError(httpStatus.FORBIDDEN, "You don't have permission to access this resource.");
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        "You don't have permission to access this resource.",
+      );
     }
 
     const user = await prisma.user.findUnique({ where: { id } });
@@ -52,7 +61,10 @@ export const auth = (...requiredRoles: Role[]) => {
     }
 
     if (user.activeStatus === "BLOCKED") {
-      throw new ApiError(httpStatus.FORBIDDEN, "Your account has been blocked. Please contact support.");
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        "Your account has been blocked. Please contact support.",
+      );
     }
 
     req.user = {

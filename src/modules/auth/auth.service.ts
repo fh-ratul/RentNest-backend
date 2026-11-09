@@ -170,7 +170,10 @@ const resendOtp = async (payload: IResendOtp) => {
   });
 
   if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "No account found with this email");
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "No account found with this email",
+    );
   }
 
   if (user.isEmailVerified) {
@@ -375,7 +378,10 @@ const refreshToken = async (token: string) => {
   const verified = jwtUtils.verifyToken(token, config.jwt_refresh_secret);
 
   if (!verified.success || !verified.data) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, verified.error || "Invalid refresh token");
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      verified.error || "Invalid refresh token",
+    );
   }
 
   const { id } = verified.data as JwtPayload;

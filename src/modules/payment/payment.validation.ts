@@ -2,7 +2,9 @@ import { z } from "zod";
 
 const createSchema = z.object({
   body: z.object({
-    rentalRequestId: z.string({ message: "rentalRequestId is required" }).uuid("Invalid rentalRequestId"),
+    rentalRequestId: z
+      .string({ message: "rentalRequestId is required" })
+      .uuid("Invalid rentalRequestId"),
   }),
 });
 
