@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
-import { ICreateProperty, IPropertyFilters, IUpdateProperty } from "./property.interface.js";
+import type { ICreateProperty, IPropertyFilters, IUpdateProperty } from "./property.interface.js";
 import { ApiError } from "../../utils/apiError.js";
 import { uploadImage } from "../../lib/cloudinary.js";
 import { runInBackground } from "../../utils/background.js";

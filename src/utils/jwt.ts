@@ -1,4 +1,4 @@
-import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
+import jwt, { type JwtPayload, type SignOptions } from "jsonwebtoken";
 
 const createToken = (payload : JwtPayload, secret : string, expiresIn : SignOptions ) => {
     const token = jwt.sign(
@@ -19,11 +19,11 @@ const verifyToken = (token : string, secret : string) => {
             success: true,
             data: verifiedToken
         };
-   } catch (error : any) {
+   } catch (error) {
         console.log("Token verification failed:", error);
         return {
             success: false,
-            error : error.message
+            error : error instanceof Error ? error.message : "Invalid token"
         }
    }
 }

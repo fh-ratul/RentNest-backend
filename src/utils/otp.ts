@@ -1,4 +1,4 @@
-import { randomInt } from "crypto";
+import { randomInt } from "node:crypto";
 import httpStatus from "http-status";
 import { getRedis } from "../lib/redis.js";
 import { ApiError } from "./apiError.js";

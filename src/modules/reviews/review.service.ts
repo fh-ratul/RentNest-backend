@@ -1,6 +1,6 @@
 import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma.js";
-import { ICreateReview } from "./review.interface.js";
+import type { ICreateReview } from "./review.interface.js";
 import { ApiError } from "../../utils/apiError.js";
 
 const createReview = async (tenantId: string, payload: ICreateReview) => {

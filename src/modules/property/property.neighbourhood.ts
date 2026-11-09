@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import { z } from "zod";
 import { generateJson } from "../../lib/ai.js";
-import { NEARBY_RADIUS_M, nearbyPlaces, route, TNearbyCategory, TPoint } from "../../lib/osm.js";
+import { NEARBY_RADIUS_M, nearbyPlaces, route, type TNearbyCategory, type TPoint } from "../../lib/osm.js";
 import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../utils/apiError.js";
 import { cached } from "../../utils/cache.js";

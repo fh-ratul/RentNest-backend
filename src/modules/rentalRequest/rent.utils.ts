@@ -1,5 +1,5 @@
 import httpStatus from "http-status";
-import { RentalStatus } from "./rent.interface.js";
+import type { RentalStatus } from "./rent.interface.js";
 import { ApiError } from "../../utils/apiError.js";
 
 const VALID_TRANSITIONS: Record<RentalStatus, RentalStatus[]> = {

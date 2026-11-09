@@ -1,12 +1,12 @@
 import bcrypt from "bcryptjs";
-import { JwtPayload, SignOptions } from "jsonwebtoken";
+import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import type { TokenPayload } from "google-auth-library";
 import httpStatus from "http-status";
 import { AuthProvider, Role } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { googleClient } from "../../lib/googleAuth.js";
 import config from "../../config/index.js";
-import {
+import type {
   IRegisterUser,
   ILoginUser,
   IVerifyEmail,
@@ -278,7 +278,7 @@ const googleLogin = async (payload: IGoogleLogin) => {
   // An unverified email/password account never proved it owns this email,
   // so it is taken over as a fresh Google sign up. Its password is dropped:
   // whoever set it could otherwise log in to the Google user's account.
-  if (existingUser && existingUser.isEmailVerified) {
+  if (existingUser?.isEmailVerified) {
     // Google login is for tenants and landlords: admins must use their password.
     if (existingUser.role === Role.ADMIN) {
       throw new ApiError(

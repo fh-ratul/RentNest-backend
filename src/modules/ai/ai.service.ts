@@ -1,10 +1,10 @@
 import httpStatus from "http-status";
 import { z } from "zod";
 import config from "../../config/index.js";
-import { generateJson, TAiImage } from "../../lib/ai.js";
+import { generateJson, type TAiImage } from "../../lib/ai.js";
 import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../utils/apiError.js";
-import { IListingDraftInput } from "./ai.interface.js";
+import type { IListingDraftInput } from "./ai.interface.js";
 
 const MAX_PHOTOS = 6;
 const PHOTO_TIMEOUT_MS = 10_000;

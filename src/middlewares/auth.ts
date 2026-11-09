@@ -1,12 +1,12 @@
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../utils/catchAsync.js";
 import config from "../config/index.js";
 import { prisma } from "../lib/prisma.js";
 import httpStatus from "http-status";
-import { Role } from "@prisma/client";
+import type { Role } from "@prisma/client";
 import { ApiError } from "../utils/apiError.js";
 import { jwtUtils } from "../utils/jwt.js";
-import { JwtPayload } from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
 
 declare global {
   namespace Express {
@@ -39,7 +39,7 @@ export const auth = (...requiredRoles: Role[]) => {
       throw new ApiError(httpStatus.UNAUTHORIZED, verifiedToken.error || "Invalid or expired token");
     }
 
-    const { id, name, email, role } = verifiedToken.data as JwtPayload;
+    const { id, role } = verifiedToken.data as JwtPayload;
 
     if (requiredRoles.length && !requiredRoles.includes(role)) {
       throw new ApiError(httpStatus.FORBIDDEN, "You don't have permission to access this resource.");

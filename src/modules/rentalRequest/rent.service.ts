@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
-import { ICreateRentalRequest, IUpdateRentalStatus } from "./rent.interface.js";
+import type { ICreateRentalRequest, IUpdateRentalStatus } from "./rent.interface.js";
 import { ApiError } from "../../utils/apiError.js";
 import { assertValidTransition } from "./rent.utils.js";
 

@@ -1,10 +1,9 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync.js";
-import { ApiError } from "../../utils/apiError.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { paymentService } from "./payment.service.js";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { stripe } from "../../lib/stripe.js";
 import config from "../../config/index.js";
 

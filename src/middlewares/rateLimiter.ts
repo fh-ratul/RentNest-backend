@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
-import { timingSafeEqual } from "crypto";
+import type { Request, Response, NextFunction } from "express";
+import { timingSafeEqual } from "node:crypto";
 import config from "../config/index.js";
 import { prisma } from "../lib/prisma.js";
 
