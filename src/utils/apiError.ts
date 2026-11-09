@@ -5,7 +5,7 @@ export class ApiError extends Error {
 
   constructor(statusCode: number, message: string, code?: string) {
     super(message);
-    this.statusCode = statusCode; 
+    this.statusCode = statusCode;
     this.code = code;
   }
 }

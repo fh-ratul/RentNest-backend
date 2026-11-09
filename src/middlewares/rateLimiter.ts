@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
-import { timingSafeEqual } from "crypto";
+import type { Request, Response, NextFunction } from "express";
+import { timingSafeEqual } from "node:crypto";
 import config from "../config/index.js";
 import { prisma } from "../lib/prisma.js";
 
@@ -23,7 +23,12 @@ type LimiterOptions = {
   message: string;
 };
 
-const createRateLimiter = ({ prefix, limit, windowMs, message }: LimiterOptions) => {
+const createRateLimiter = ({
+  prefix,
+  limit,
+  windowMs,
+  message,
+}: LimiterOptions) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const key = `${prefix}:${clientIp(req)}`;
     const now = new Date();
@@ -41,9 +46,9 @@ const createRateLimiter = ({ prefix, limit, windowMs, message }: LimiterOptions)
         RETURNING count;
       `;
 
-        if(!row){
-            throw new Error("Error")
-        }
+      if (!row) {
+        throw new Error("Error");
+      }
       if (row.count > limit) {
         return res.status(429).json({
           success: false,
@@ -61,14 +66,14 @@ const createRateLimiter = ({ prefix, limit, windowMs, message }: LimiterOptions)
   };
 };
 
- const authLimiter = createRateLimiter({
+const authLimiter = createRateLimiter({
   prefix: "auth",
   limit: 10,
   windowMs: 15 * 60 * 1000,
   message: "Too many attempts. Please try again after 15 minutes.",
 });
 
- const generalLimiter = createRateLimiter({
+const generalLimiter = createRateLimiter({
   prefix: "general",
   limit: 300,
   windowMs: 15 * 60 * 1000,
@@ -91,9 +96,9 @@ const mapLimiter = createRateLimiter({
   message: "Too many map lookups. Please try again in a few minutes.",
 });
 
-export const RateLimiter={
-    authLimiter,
-    generalLimiter,
-    aiLimiter,
-    mapLimiter
-}
+export const RateLimiter = {
+  authLimiter,
+  generalLimiter,
+  aiLimiter,
+  mapLimiter,
+};

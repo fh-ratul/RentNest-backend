@@ -1,4 +1,4 @@
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 import { catchAsync } from "../utils/catchAsync.js";
 import type { ZodTypeAny } from "zod";
 

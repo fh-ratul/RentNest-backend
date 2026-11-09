@@ -1,7 +1,10 @@
 import httpStatus from "http-status";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
-import { ICreateRentalRequest, IUpdateRentalStatus } from "./rent.interface.js";
+import type {
+  ICreateRentalRequest,
+  IUpdateRentalStatus,
+} from "./rent.interface.js";
 import { ApiError } from "../../utils/apiError.js";
 import { assertValidTransition } from "./rent.utils.js";
 
@@ -70,10 +73,19 @@ const getMyRentalRequests = async (tenantId: string) => {
   });
 };
 
-const getRentalRequestById = async (id: string, userId: string, role: string) => {
+const getRentalRequestById = async (
+  id: string,
+  userId: string,
+  role: string,
+) => {
   const rental = await prisma.rentalRequest.findUnique({
     where: { id },
-    include: { property: true, tenant: { select: { id: true, name: true, email: true } }, payment: true, review: true },
+    include: {
+      property: true,
+      tenant: { select: { id: true, name: true, email: true } },
+      payment: true,
+      review: true,
+    },
   });
 
   if (!rental) {
@@ -84,7 +96,10 @@ const getRentalRequestById = async (id: string, userId: string, role: string) =>
   const isOwnerLandlord = rental.property.landlordId === userId;
 
   if (role !== "ADMIN" && !isOwnerTenant && !isOwnerLandlord) {
-    throw new ApiError(httpStatus.FORBIDDEN, "You don't have access to this rental request");
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "You don't have access to this rental request",
+    );
   }
 
   return rental;
@@ -93,33 +108,59 @@ const getRentalRequestById = async (id: string, userId: string, role: string) =>
 const getRequestsForLandlord = async (landlordId: string) => {
   return prisma.rentalRequest.findMany({
     where: { property: { landlordId } },
-    include: { property: true, tenant: { select: { id: true, name: true, email: true } }, payment: true },
+    include: {
+      property: true,
+      tenant: { select: { id: true, name: true, email: true } },
+      payment: true,
+    },
     orderBy: { createdAt: "desc" },
   });
 };
 
-const updateRentalStatus = async (id: string, landlordId: string, payload: IUpdateRentalStatus) => {
-  const rental = await prisma.rentalRequest.findUnique({ where: { id }, include: { property: true } });
+const updateRentalStatus = async (
+  id: string,
+  landlordId: string,
+  payload: IUpdateRentalStatus,
+) => {
+  const rental = await prisma.rentalRequest.findUnique({
+    where: { id },
+    include: { property: true },
+  });
 
   if (!rental) {
     throw new ApiError(httpStatus.NOT_FOUND, "Rental request not found");
   }
   if (rental.property.landlordId !== landlordId) {
-    throw new ApiError(httpStatus.FORBIDDEN, "You can only manage requests for your own properties");
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "You can only manage requests for your own properties",
+    );
   }
 
   assertValidTransition(rental.status, payload.status);
 
   if (payload.status === "APPROVED" && rental.property.status !== "AVAILABLE") {
-    throw new ApiError(httpStatus.CONFLICT, "This property is no longer available");
+    throw new ApiError(
+      httpStatus.CONFLICT,
+      "This property is no longer available",
+    );
   }
 
   // Only one APPROVED/ACTIVE rental per property is allowed (partial unique index).
   try {
-    return await prisma.rentalRequest.update({ where: { id }, data: { status: payload.status } });
+    return await prisma.rentalRequest.update({
+      where: { id },
+      data: { status: payload.status },
+    });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new ApiError(httpStatus.CONFLICT, "Another tenant has already been approved for this property");
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw new ApiError(
+        httpStatus.CONFLICT,
+        "Another tenant has already been approved for this property",
+      );
     }
     throw error;
   }
@@ -129,5 +170,5 @@ export const rentalRequestService = {
   getMyRentalRequests,
   getRentalRequestById,
   getRequestsForLandlord,
-  updateRentalStatus
+  updateRentalStatus,
 };

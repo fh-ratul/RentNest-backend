@@ -1,7 +1,13 @@
 import httpStatus from "http-status";
 import { z } from "zod";
 import { generateJson } from "../../lib/ai.js";
-import { NEARBY_RADIUS_M, nearbyPlaces, route, TNearbyCategory, TPoint } from "../../lib/osm.js";
+import {
+  NEARBY_RADIUS_M,
+  nearbyPlaces,
+  route,
+  type TNearbyCategory,
+  type TPoint,
+} from "../../lib/osm.js";
 import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../utils/apiError.js";
 import { cached } from "../../utils/cache.js";
@@ -21,7 +27,9 @@ const summarise = async (area: string, categories: TNearbyCategory[]) => {
   const lines = found.map(
     (c) =>
       `- ${c.label}: ${c.count}${c.more ? "+" : ""} within ${NEARBY_RADIUS_M} m` +
-      (c.nearest ? `; nearest is ${c.nearest.name}, ${c.nearest.distanceM} m away` : ""),
+      (c.nearest
+        ? `; nearest is ${c.nearest.name}, ${c.nearest.distanceM} m away`
+        : ""),
   );
 
   try {
@@ -45,21 +53,32 @@ export const refreshNeighbourhood = async (propertyId: string) => {
     where: { id: propertyId },
     select: { latitude: true, longitude: true, address: true, city: true },
   });
-  if (!property || property.latitude === null || property.longitude === null) return;
+  if (!property || property.latitude === null || property.longitude === null)
+    return;
 
   const point = { lat: property.latitude, lng: property.longitude };
 
   // Marks the attempt, so views don't start a second lookup while this one runs.
-  await prisma.property.update({ where: { id: propertyId }, data: { neighbourhoodUpdatedAt: new Date() } });
+  await prisma.property.update({
+    where: { id: propertyId },
+    data: { neighbourhoodUpdatedAt: new Date() },
+  });
 
   const categories = await nearbyPlaces(point);
-  const summary = await summarise(`${property.address}, ${property.city}`, categories);
+  const summary = await summarise(
+    `${property.address}, ${property.city}`,
+    categories,
+  );
 
   // Only save if the pin hasn't moved while the lookup was running.
   await prisma.property.updateMany({
     where: { id: propertyId, latitude: point.lat, longitude: point.lng },
     data: {
-      neighbourhood: { radiusM: NEARBY_RADIUS_M, source: "OpenStreetMap", categories },
+      neighbourhood: {
+        radiusM: NEARBY_RADIUS_M,
+        source: "OpenStreetMap",
+        categories,
+      },
       neighbourhoodSummary: summary,
       neighbourhoodUpdatedAt: new Date(),
     },
@@ -77,7 +96,8 @@ export const needsNeighbourhood = (property: {
   property.latitude !== null &&
   property.longitude !== null &&
   !property.neighbourhood &&
-  (!property.neighbourhoodUpdatedAt || Date.now() - property.neighbourhoodUpdatedAt.getTime() > RETRY_AFTER_MS);
+  (!property.neighbourhoodUpdatedAt ||
+    Date.now() - property.neighbourhoodUpdatedAt.getTime() > RETRY_AFTER_MS);
 
 // Car and walking times from a listing to a place the tenant picked.
 export const getCommute = async (propertyId: string, to: TPoint) => {
@@ -89,20 +109,28 @@ export const getCommute = async (propertyId: string, to: TPoint) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Property not found");
   }
   if (property.latitude === null || property.longitude === null) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "This listing has no location on the map yet");
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "This listing has no location on the map yet",
+    );
   }
 
   const from = { lat: property.latitude, lng: property.longitude };
   // ~100 m of rounding, so nearby picks share a cached answer. Each mode is
   // cached on its own, so one that failed is retried next time.
   const leg = (mode: "car" | "foot") =>
-    cached(`commute:${mode}:${propertyId}:${to.lat.toFixed(3)},${to.lng.toFixed(3)}`, 60 * 60 * 24 * 7, () =>
-      route(from, to, mode),
+    cached(
+      `commute:${mode}:${propertyId}:${to.lat.toFixed(3)},${to.lng.toFixed(3)}`,
+      60 * 60 * 24 * 7,
+      () => route(from, to, mode),
     );
   const [car, foot] = await Promise.all([leg("car"), leg("foot")]);
 
   if (!car && !foot) {
-    throw new ApiError(httpStatus.BAD_GATEWAY, "Travel times are unavailable right now. Please try again shortly.");
+    throw new ApiError(
+      httpStatus.BAD_GATEWAY,
+      "Travel times are unavailable right now. Please try again shortly.",
+    );
   }
   return { car, foot };
 };

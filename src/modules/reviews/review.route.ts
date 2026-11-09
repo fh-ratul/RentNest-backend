@@ -6,6 +6,11 @@ import { reviewValidation } from "./review.validation.js";
 import { Role } from "@prisma/client";
 
 const router = Router();
-router.post("/", auth(Role.TENANT), validateRequest(reviewValidation.createSchema), reviewController.createReview);
+router.post(
+  "/",
+  auth(Role.TENANT),
+  validateRequest(reviewValidation.createSchema),
+  reviewController.createReview,
+);
 
 export const reviewRoutes = router;

@@ -1,18 +1,30 @@
 import httpStatus from "http-status";
 import { z } from "zod";
 import config from "../../config/index.js";
-import { generateJson, TAiImage } from "../../lib/ai.js";
+import { generateJson, type TAiImage } from "../../lib/ai.js";
 import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../utils/apiError.js";
-import { IListingDraftInput } from "./ai.interface.js";
+import type { IListingDraftInput } from "./ai.interface.js";
 
 const MAX_PHOTOS = 6;
 const PHOTO_TIMEOUT_MS = 10_000;
 
 // The same names the seeded listings use, so filters and badges stay consistent.
 const COMMON_AMENITIES = [
-  "Lift", "Generator backup", "Gas line", "Car parking", "24/7 security", "CCTV", "Balcony",
-  "Furnished", "Air conditioning", "Wi-Fi", "Rooftop access", "Garden", "Swimming pool", "Gym",
+  "Lift",
+  "Generator backup",
+  "Gas line",
+  "Car parking",
+  "24/7 security",
+  "CCTV",
+  "Balcony",
+  "Furnished",
+  "Air conditioning",
+  "Wi-Fi",
+  "Rooftop access",
+  "Garden",
+  "Swimming pool",
+  "Gym",
 ];
 
 // The server downloads these photos, so it only accepts the two places the
@@ -27,7 +39,10 @@ const toAnalysisUrl = (url: string): string | null => {
 
   try {
     const parsed = new URL(url);
-    if (parsed.protocol === "https:" && parsed.hostname === "images.unsplash.com") {
+    if (
+      parsed.protocol === "https:" &&
+      parsed.hostname === "images.unsplash.com"
+    ) {
       parsed.search = "?w=1024&q=70&fm=jpg";
       return parsed.toString();
     }
@@ -40,7 +55,9 @@ const toAnalysisUrl = (url: string): string | null => {
 
 const fetchPhoto = async (url: string): Promise<TAiImage | null> => {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(PHOTO_TIMEOUT_MS) });
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(PHOTO_TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     const data = Buffer.from(await res.arrayBuffer()).toString("base64");
     return { mimeType: "image/jpeg", data };
@@ -65,7 +82,9 @@ const describeFacts = (input: IListingDraftInput) => {
     input.notes && `Landlord's notes: ${input.notes}`,
   ].filter(Boolean);
 
-  return facts.length ? facts.map((fact) => `- ${fact}`).join("\n") : "- (none given yet)";
+  return facts.length
+    ? facts.map((fact) => `- ${fact}`).join("\n")
+    : "- (none given yet)";
 };
 
 const instructions = (categoryNames: string[]) => `Return:
@@ -76,22 +95,36 @@ const instructions = (categoryNames: string[]) => `Return:
 - photoWarnings: short, specific problems the landlord should fix before publishing (too dark, blurry, cluttered, tilted, duplicate photos, a photo that isn't of the property, no photo of the kitchen or bathroom). An empty list if the photos are good.`;
 
 const draftListing = async (input: IListingDraftInput) => {
-  const categories = await prisma.category.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } });
+  const categories = await prisma.category.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
   if (!categories.length) {
-    throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, "No property categories exist yet");
+    throw new ApiError(
+      httpStatus.SERVICE_UNAVAILABLE,
+      "No property categories exist yet",
+    );
   }
   const categoryNames = categories.map((c) => c.name);
 
-  const analysisUrls = input.imageUrls.map(toAnalysisUrl).filter((url): url is string => Boolean(url));
+  const analysisUrls = input.imageUrls
+    .map(toAnalysisUrl)
+    .filter((url): url is string => Boolean(url));
   if (!analysisUrls.length) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Upload at least one photo to RentNest so the AI can look at it");
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Upload at least one photo to RentNest so the AI can look at it",
+    );
   }
 
-  const photos = (await Promise.all(analysisUrls.slice(0, MAX_PHOTOS).map(fetchPhoto))).filter(
-    (photo): photo is TAiImage => Boolean(photo),
-  );
+  const photos = (
+    await Promise.all(analysisUrls.slice(0, MAX_PHOTOS).map(fetchPhoto))
+  ).filter((photo): photo is TAiImage => Boolean(photo));
   if (!photos.length) {
-    throw new ApiError(httpStatus.BAD_GATEWAY, "The photos could not be loaded for the AI. Please try again.");
+    throw new ApiError(
+      httpStatus.BAD_GATEWAY,
+      "The photos could not be loaded for the AI. Please try again.",
+    );
   }
 
   const schema = z.object({
@@ -115,7 +148,9 @@ const draftListing = async (input: IListingDraftInput) => {
   return {
     title: data.title.trim().slice(0, 100),
     description: data.description.trim(),
-    amenities: [...new Set(data.amenities.map((a) => a.trim()).filter(Boolean))].slice(0, 8),
+    amenities: [
+      ...new Set(data.amenities.map((a) => a.trim()).filter(Boolean)),
+    ].slice(0, 8),
     categoryId: categories.find((c) => c.name === data.categoryName)!.id,
     photoWarnings: provider === "gemini" ? data.photoWarnings.slice(0, 5) : [],
     // Tells the frontend whether the photos were actually looked at.

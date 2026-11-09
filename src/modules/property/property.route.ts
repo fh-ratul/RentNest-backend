@@ -22,8 +22,20 @@ const landlordRouter = Router();
 landlordRouter.use(auth(Role.LANDLORD));
 landlordRouter.get("/", propertyController.getMyProperties);
 // One photo per request, sent as multipart form data in the "image" field.
-landlordRouter.post("/images", upload.single("image"), propertyController.uploadPropertyImage);
-landlordRouter.post("/", validateRequest(propertyValidation.createSchema), propertyController.createProperty);
-landlordRouter.put("/:id", validateRequest(propertyValidation.updateSchema), propertyController.updateProperty);
+landlordRouter.post(
+  "/images",
+  upload.single("image"),
+  propertyController.uploadPropertyImage,
+);
+landlordRouter.post(
+  "/",
+  validateRequest(propertyValidation.createSchema),
+  propertyController.createProperty,
+);
+landlordRouter.put(
+  "/:id",
+  validateRequest(propertyValidation.updateSchema),
+  propertyController.updateProperty,
+);
 landlordRouter.delete("/:id", propertyController.deleteProperty);
 export const landlordPropertyRoutes = landlordRouter;

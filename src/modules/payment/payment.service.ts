@@ -1,6 +1,6 @@
 import httpStatus from "http-status";
 import { Prisma } from "@prisma/client";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import config from "../../config/index.js";
 import { prisma } from "../../lib/prisma.js";
 import { stripe } from "../../lib/stripe.js";

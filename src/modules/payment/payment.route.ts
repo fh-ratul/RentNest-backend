@@ -7,8 +7,18 @@ import { Role } from "@prisma/client";
 
 const router = Router();
 
-router.post("/create", auth(Role.TENANT), validateRequest(paymentValidation.createSchema), paymentController.createPayment);
-router.post("/confirm", auth(Role.TENANT), validateRequest(paymentValidation.confirmSchema), paymentController.confirmPayment);
+router.post(
+  "/create",
+  auth(Role.TENANT),
+  validateRequest(paymentValidation.createSchema),
+  paymentController.createPayment,
+);
+router.post(
+  "/confirm",
+  auth(Role.TENANT),
+  validateRequest(paymentValidation.confirmSchema),
+  paymentController.confirmPayment,
+);
 router.get("/", auth(Role.TENANT), paymentController.getMyPayments);
 router.get("/:id", auth(), paymentController.getPaymentById);
 

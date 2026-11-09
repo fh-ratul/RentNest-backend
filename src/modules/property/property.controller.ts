@@ -1,13 +1,14 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { propertyService } from "./property.service.js";
 import { getCommute } from "./property.neighbourhood.js";
+import type { IPropertyFilters } from "./property.interface.js";
 
 const getAllProperties = catchAsync(async (req: Request, res: Response) => {
   const { properties, meta } = await propertyService.getAllProperties(
-    req.query as any,
+    req.query as IPropertyFilters,
   );
   sendResponse(res, {
     success: true,

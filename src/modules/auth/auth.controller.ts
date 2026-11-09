@@ -1,4 +1,4 @@
-import { CookieOptions, NextFunction, Request, Response } from "express";
+import type { CookieOptions, NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
@@ -26,7 +26,11 @@ const setAuthCookies = (
   { accessToken, refreshToken }: { accessToken: string; refreshToken: string },
 ) => {
   setAccessTokenCookie(res, accessToken);
-  res.cookie("refreshToken", refreshToken, cookieOptions(REFRESH_TOKEN_MAX_AGE));
+  res.cookie(
+    "refreshToken",
+    refreshToken,
+    cookieOptions(REFRESH_TOKEN_MAX_AGE),
+  );
 };
 
 const registerUser = catchAsync(async (req: Request, res: Response) => {

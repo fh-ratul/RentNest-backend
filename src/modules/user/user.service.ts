@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma.js";
 import config from "../../config/index.js";
-import { IUpdateProfile, IChangePassword } from "./user.interface.js";
+import type { IUpdateProfile, IChangePassword } from "./user.interface.js";
 import { ApiError } from "../../utils/apiError.js";
 
 const updateProfile = async (userId: string, payload: IUpdateProfile) => {

@@ -4,7 +4,9 @@ import { z } from "zod";
 const listingDraftSchema = z.object({
   body: z.object({
     imageUrls: z
-      .array(z.string().url("Each photo must be a valid URL"), { message: "Photos are required" })
+      .array(z.string().url("Each photo must be a valid URL"), {
+        message: "Photos are required",
+      })
       .min(1, "Add at least one photo first")
       .max(10, "Up to 10 photos"),
     city: z.string().max(100).optional(),
