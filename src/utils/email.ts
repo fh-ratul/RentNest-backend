@@ -1,5 +1,6 @@
 import config from "../config/index.js";
 import { transporter } from "../lib/nodemailer.js";
+import { isDemoEmail } from "./demo.js";
 
 export type TEmail = {
   to: string;
@@ -12,7 +13,7 @@ export type TEmail = {
 // Awaited by callers because a serverless function may be frozen once it responds.
 export const sendEmail = async ({ to, subject, html }: TEmail) => {
   // The seeded demo accounts use example.com, which has no mailboxes.
-  if (to.toLowerCase().endsWith("@example.com")) {
+  if (isDemoEmail(to)) {
     return true;
   }
 
