@@ -7,14 +7,50 @@ import { stripe } from "../../lib/stripe.js";
 import { ApiError } from "../../utils/apiError.js";
 import { assertValidTransition } from "../rentalRequest/rent.utils.js";
 
+const paymentInclude = {
+  rentalRequest: { include: { property: true } },
+} as const;
+
+// Refunds a session paid for a rental that was already paid through another
+// session. The key stops the webhook and the success page refunding twice.
+const refundDuplicateCharge = async (session: Stripe.Checkout.Session) => {
+  const paymentIntent =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id;
+  if (!paymentIntent) {
+    throw new ApiError(
+      httpStatus.BAD_GATEWAY,
+      `Cannot refund duplicate session ${session.id}: no payment intent`,
+    );
+  }
+
+  try {
+    await stripe.refunds.create(
+      { payment_intent: paymentIntent },
+      { idempotencyKey: `duplicate-refund-${session.id}` },
+    );
+  } catch (error) {
+    const alreadyRefunded =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "charge_already_refunded";
+    if (!alreadyRefunded) throw error;
+  }
+  console.warn(
+    `Refunded duplicate payment: session ${session.id}, rental ${session.metadata?.rentalRequestId}`,
+  );
+};
+
 const completeStripePayment = async (session: Stripe.Checkout.Session) => {
-  const payment = await prisma.payment.findUnique({
+  const bySession = await prisma.payment.findUnique({
     where: { stripeSessionId: session.id },
-    include: { rentalRequest: { include: { property: true } } },
+    include: paymentInclude,
   });
 
-  if (payment?.status === "COMPLETED") {
-    return payment;
+  if (bySession?.status === "COMPLETED") {
+    return bySession;
   }
 
   if (session.payment_status !== "paid") {
@@ -25,13 +61,27 @@ const completeStripePayment = async (session: Stripe.Checkout.Session) => {
   }
 
   const rentalRequestId =
-    payment?.rentalRequestId ?? session.metadata?.rentalRequestId;
+    bySession?.rentalRequestId ?? session.metadata?.rentalRequestId;
 
   if (!rentalRequestId) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       "Missing rental request reference on payment session",
     );
+  }
+
+  // A paid session that isn't on the payment row comes from an older checkout
+  // tab. It settles the rental's payment, or is refunded if that's already paid.
+  const payment =
+    bySession ??
+    (await prisma.payment.findUnique({
+      where: { rentalRequestId },
+      include: paymentInclude,
+    }));
+
+  if (payment?.status === "COMPLETED") {
+    await refundDuplicateCharge(session);
+    return payment;
   }
 
   const rental =
@@ -53,18 +103,20 @@ const completeStripePayment = async (session: Stripe.Checkout.Session) => {
     typeof session.payment_intent === "string" ? session.payment_intent : null;
 
   if (payment) {
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Conditional update: only one concurrent call can move the payment to COMPLETED.
       const { count } = await tx.payment.updateMany({
         where: { id: payment.id, status: { not: "COMPLETED" } },
         data: {
           status: "COMPLETED",
+          stripeSessionId: session.id,
           transactionId,
           paidAt: new Date(),
         },
       });
 
-      // Another call (webhook or /confirm) already completed this payment.
+      // Another call (webhook or /confirm) already completed this payment,
+      // possibly with a different session.
       if (count === 0) {
         return tx.payment.findUniqueOrThrow({ where: { id: payment.id } });
       }
@@ -81,6 +133,21 @@ const completeStripePayment = async (session: Stripe.Checkout.Session) => {
 
       return tx.payment.findUniqueOrThrow({ where: { id: payment.id } });
     });
+
+    if (result.stripeSessionId !== session.id) {
+      // Two sessions were paid at once and the other one won.
+      await refundDuplicateCharge(session);
+    } else if (
+      payment.stripeSessionId &&
+      payment.stripeSessionId !== session.id
+    ) {
+      // An older tab's session paid the rental: close the newer one so it
+      // can't be paid too. If it was paid already, its webhook refunds it.
+      await stripe.checkout.sessions
+        .expire(payment.stripeSessionId)
+        .catch(() => undefined);
+    }
+    return result;
   }
 
   const amount = Number(rental.property.price);
@@ -118,9 +185,13 @@ const completeStripePayment = async (session: Stripe.Checkout.Session) => {
       error.code === "P2002"
     ) {
       const existingPayment = await prisma.payment.findUnique({
-        where: { stripeSessionId: session.id },
+        where: { rentalRequestId: rental.id },
       });
-      if (existingPayment) {
+      if (existingPayment?.stripeSessionId === session.id) {
+        return existingPayment;
+      }
+      if (existingPayment?.status === "COMPLETED") {
+        await refundDuplicateCharge(session);
         return existingPayment;
       }
     }
@@ -260,24 +331,32 @@ const createPayment = async (tenantId: string, rentalRequestId: string) => {
 const confirmPayment = async (tenantId: string, sessionId: string) => {
   const payment = await prisma.payment.findUnique({
     where: { stripeSessionId: sessionId },
-    include: { rentalRequest: { include: { property: true } } },
+    include: paymentInclude,
   });
 
-  if (!payment) {
-    throw new ApiError(
-      httpStatus.NOT_FOUND,
-      "No payment found for this session",
-    );
-  }
-  if (payment.rentalRequest.tenantId !== tenantId) {
-    throw new ApiError(httpStatus.FORBIDDEN, "This is not your payment");
-  }
-
-  if (payment.status === "COMPLETED") {
-    return payment;
+  if (payment) {
+    if (payment.rentalRequest.tenantId !== tenantId) {
+      throw new ApiError(httpStatus.FORBIDDEN, "This is not your payment");
+    }
+    if (payment.status === "COMPLETED") {
+      return payment;
+    }
   }
 
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  // No row for this session: it may be an older checkout tab's session, so
+  // ask Stripe and check it belongs to this tenant.
+  const notFound = new ApiError(
+    httpStatus.NOT_FOUND,
+    "No payment found for this session",
+  );
+  const session = await stripe.checkout.sessions
+    .retrieve(sessionId)
+    .catch(() => {
+      throw notFound;
+    });
+  if (!payment && session.metadata?.tenantId !== tenantId) {
+    throw notFound;
+  }
 
   if (session.payment_status !== "paid") {
     throw new ApiError(
