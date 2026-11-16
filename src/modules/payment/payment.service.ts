@@ -159,26 +159,74 @@ const createPayment = async (tenantId: string, rentalRequestId: string) => {
     );
   }
 
-  const amount = Number(rental.property.price);
+  // Starting checkout is idempotent: a rental has at most one payable session.
+  // Clicking Pay again returns the open session instead of creating a second
+  // one the tenant could also pay.
+  const previousSessionId = rental.payment?.stripeSessionId ?? null;
+  if (
+    rental.payment &&
+    previousSessionId &&
+    rental.payment.status === "PENDING"
+  ) {
+    const previous = await stripe.checkout.sessions.retrieve(previousSessionId);
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price_data: {
-          // Rent is stored in BDT; unit_amount is in poisha (1/100 taka).
-          currency: "bdt",
-          product_data: { name: `Rent payment - ${rental.property.title}` },
-          unit_amount: Math.round(amount * 100),
+    if (previous.status === "open" && previous.url) {
+      return {
+        paymentUrl: previous.url,
+        sessionId: previous.id,
+        paymentId: rental.payment.id,
+      };
+    }
+
+    if (previous.status === "complete") {
+      if (previous.payment_status !== "paid") {
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          "A payment for this rental is still being processed",
+        );
+      }
+      // Paid, but the webhook hasn't arrived yet: settle it now and send the
+      // tenant to the success page rather than charging them again.
+      await completeStripePayment(previous);
+      return {
+        paymentUrl: `${config.app_url}/payments/success?session_id=${previous.id}`,
+        sessionId: previous.id,
+        paymentId: rental.payment.id,
+      };
+    }
+    // Expired: fall through and create a new session.
+  }
+
+  const amount = Number(rental.property.price);
+  const unitAmount = Math.round(amount * 100);
+
+  // Two Pay clicks that arrive together both get past the check above. The key
+  // makes Stripe return the same session to both. It changes once the previous
+  // session is replaced (or the price changes), so an expired session is never
+  // handed back.
+  const idempotencyKey = `checkout-${rental.id}-${previousSessionId ?? "first"}-${unitAmount}`;
+
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            // Rent is stored in BDT; unit_amount is in poisha (1/100 taka).
+            currency: "bdt",
+            product_data: { name: `Rent payment - ${rental.property.title}` },
+            unit_amount: unitAmount,
+          },
+          quantity: 1,
         },
-        quantity: 1,
-      },
-    ],
-    success_url: `${config.app_url}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${config.app_url}/payments/cancel`,
-    metadata: { rentalRequestId: rental.id, tenantId },
-  });
+      ],
+      success_url: `${config.app_url}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${config.app_url}/payments/cancel`,
+      metadata: { rentalRequestId: rental.id, tenantId },
+    },
+    { idempotencyKey },
+  );
 
   if (!session.url) {
     throw new ApiError(
